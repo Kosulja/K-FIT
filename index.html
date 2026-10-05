@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="hr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>K-FIT</title>
+<meta name="theme-color" content="#0e0f11">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="K-FIT"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap">
+<script src="lib/supabase.js"></script>
+<script src="lib/lucide.min.js"></script>
+<script src="lib/chart.umd.js"></script>
+<style>
+/* Layout: sticky top bar on desktop, bottom tab bar on phones. Dark-first: near-black ground with a faint red bias, graphite cards, dragon red as the single accent. */
+:root{--bg:#0e0f11;--card:#17181b;--ink:#ecece9;--mute:#9a9ca3;--line:#27282d;--soft:#202125;
+--acc:#e0975c;--acc-ink:#1a1008;--acc-soft:#33231a;--acc-mid:#7b4b2b;
+--ok:#5fd08a;--ok-soft:#143020;--warn:#e8bd4f;--warn-soft:#352b0e;--bad:#f08585;--bad-soft:#3a1b1b;
+--shadow:0 1px 2px rgb(0 0 0/.45),0 10px 24px -12px rgb(0 0 0/.7);color-scheme:dark}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f2f2ef;--card:#ffffff;--ink:#1a1b1e;--mute:#6b6d74;--line:#e3e3de;--soft:#ebebe7;
+--acc:#b4622a;--acc-ink:#ffffff;--acc-soft:#f6e6d8;--acc-mid:#e6bd9b;
+--ok:#15803d;--ok-soft:#dcf1e3;--warn:#946200;--warn-soft:#faedc4;--bad:#b91c1c;--bad-soft:#fbe1e1;
+--shadow:0 1px 2px rgb(20 10 10/.05),0 6px 18px -8px rgb(20 10 10/.15);color-scheme:light}}
+:root[data-theme="light"]{--bg:#f2f2ef;--card:#ffffff;--ink:#1a1b1e;--mute:#6b6d74;--line:#e3e3de;--soft:#ebebe7;
+--acc:#b4622a;--acc-ink:#ffffff;--acc-soft:#f6e6d8;--acc-mid:#e6bd9b;
+--ok:#15803d;--ok-soft:#dcf1e3;--warn:#946200;--warn-soft:#faedc4;--bad:#b91c1c;--bad-soft:#fbe1e1;
+--shadow:0 1px 2px rgb(20 10 10/.05),0 6px 18px -8px rgb(20 10 10/.15);color-scheme:light}
+html{scroll-padding-top:4.5rem}body{padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--ink);font-family:Barlow,system-ui,sans-serif;font-size:15px;line-height:1.45;overflow-x:hidden}
+h1,h2,h3{text-wrap:balance}
+.tnum{font-variant-numeric:tabular-nums}
+*:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.logo{font-family:'Barlow Condensed',Barlow,sans-serif;font-weight:800;font-size:30px;letter-spacing:.08em;line-height:1;font-style:italic}
+.logo b{color:var(--acc)}
+.dnav button{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:10px;font-weight:600;color:var(--mute);cursor:pointer}
+.dnav button:hover{color:var(--ink)}
+.dnav button.on{color:var(--ink);box-shadow:inset 0 -2px 0 var(--acc);border-radius:0}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 0 8px;font-size:11px;font-weight:600;color:var(--mute);cursor:pointer}
+.tabs button.on{color:var(--acc)}
+@media(min-width:768px){.tabs{display:none}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:0 15px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;font-size:14px;cursor:pointer;transition:background .15s,opacity .15s;white-space:nowrap}
+.btn:hover{background:var(--soft)}
+.btn-acc{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn-acc:hover{background:var(--acc);opacity:.9}
+.btn-bad{color:var(--bad)}
+.btn-sm{min-height:34px;padding:0 11px;font-size:13px;border-radius:9px}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.icon-btn:hover{background:var(--soft)}
+.inp{width:100%;min-height:44px;padding:8px 12px;border-radius:11px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:16px}
+textarea.inp{min-height:96px;resize:vertical}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill-ok{background:var(--ok-soft);color:var(--ok)}
+.pill-warn{background:var(--warn-soft);color:var(--warn)}
+.pill-bad{background:var(--bad-soft);color:var(--bad)}
+.pill-mute{background:var(--soft);color:var(--mute)}
+.pill-acc{background:var(--acc-soft);color:var(--ink)}
+.ibub{width:40px;height:40px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ibub-acc{background:var(--acc-soft);color:var(--acc)}.ibub-ok{background:var(--ok-soft);color:var(--ok)}.ibub-warn{background:var(--warn-soft);color:var(--warn)}.ibub-mute{background:var(--soft);color:var(--mute)}.ibub-bad{background:var(--bad-soft);color:var(--bad)}
+.dt{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.dt-ok{background:var(--ok)}.dt-warn{background:var(--warn)}.dt-bad{background:var(--bad)}.dt-mute{background:var(--mute)}.dt-acc{background:var(--acc)}
+.av{width:42px;height:42px;border-radius:999px;object-fit:cover;background:var(--soft);display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:var(--mute);flex:none;font-family:'Barlow Condensed',Barlow,sans-serif;font-size:17px;letter-spacing:.03em}
+.av-l{width:76px;height:76px;font-size:28px}
+.bar{height:8px;background:var(--soft);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc);border-radius:99px;transition:width .6s ease}
+.bar i.w{background:var(--warn)}.bar i.b{background:var(--bad)}
+.lrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line);min-width:0}
+.lrow:first-child{border-top:0}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.tbl th{text-align:left;font-weight:600;color:var(--mute);padding:12px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+.tbl td{padding:12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl tr.k{cursor:pointer}.tbl tr.k:hover td{background:var(--soft)}
+.seg{display:inline-flex;background:var(--soft);padding:3px;border-radius:11px}
+.seg button{min-height:36px;padding:0 13px;border-radius:8px;font-weight:600;font-size:14px;color:var(--mute);cursor:pointer}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0/.25)}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.cg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cg .h{color:var(--mute);font-size:11px;font-weight:700;text-align:center;padding:4px 0;text-transform:uppercase;letter-spacing:.08em}
+.cc{min-height:64px;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:6px 4px;cursor:pointer;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;overflow:hidden}
+.cc:hover{background:var(--soft)}
+.cc-o{opacity:.4}
+.cc-t .cn{background:var(--acc);color:var(--acc-ink)}
+.cc-s{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.cn{font-size:13px;font-weight:700;min-width:24px;height:24px;border-radius:99px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+@media(min-width:768px){.cc{min-height:112px;align-items:stretch;padding:8px}.cn{align-self:flex-start}}
+.ch{font-size:12px;padding:3px 7px;border-radius:6px;background:var(--acc-soft);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;border-left:2px solid var(--acc)}
+.ch-Odrađeno{background:var(--ok-soft);color:var(--ok);border-left-color:var(--ok)}
+.ch-Otkazano{background:var(--soft);color:var(--mute);text-decoration:line-through;border-left-color:var(--mute)}
+.sheet{background:var(--card);border:1px solid var(--line);width:100%;max-height:92vh;overflow:auto;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));border-radius:22px 22px 0 0}
+@media(min-width:768px){.sheet{max-width:600px;border-radius:18px;padding:24px}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(14px + env(safe-area-inset-top,0px));z-index:70;background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:var(--shadow);max-width:calc(100vw - 32px)}
+.nt{padding:12px;background:var(--soft);border-radius:12px;white-space:pre-wrap;word-break:break-word}
+.today{background:linear-gradient(135deg,var(--acc-soft),var(--card) 60%);border-color:var(--acc-mid)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="topbar">
+<div class="mx-auto max-w-[1280px] px-4 md:px-8 h-16 flex items-center gap-6">
+<button class="logo" onclick="go('dash')" aria-label="K-FIT početna">K<b>-</b>FIT</button>
+<nav id="nav" class="dnav hidden md:flex items-center gap-1 self-stretch"></nav>
+<div class="ml-auto flex items-center gap-3"><button id="syncst" class="flex items-center gap-2 text-xs font-semibold text-mute rounded-lg px-2 py-2 hover:bg-soft" aria-live="polite" onclick="diag()" title="Stanje sinkronizacije"></button><button class="icon-btn" style="width:38px;height:38px" aria-label="Sigurnost i backup" onclick="go('set')"><i data-lucide="shield-check" class="w-4 h-4"></i></button></div>
+</div>
+</header>
+<main id="main" class="mx-auto max-w-[1280px] px-4 md:px-8 pt-6 pb-28 md:pb-12"></main>
+<nav id="tabs" class="tabs"></nav>
+
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let S=null;try{S=JSON.parse(localStorage.getItem('kfit'))}catch(e){}
+S=S||{c:[],k:[],u:[],t:[],cat:[],log:[]};S.log=S.log||[];
+const COLS={c:'clients',k:'packs',u:'pays',t:'trainings',cat:'catalog',log:'log'},NC=Object.keys(COLS).length;
+let DBR=null,PREV={},LAST={},chain=Promise.resolve(),pending=0,DL=null;
+function setSt(k){const e=$('#syncst');if(!e)return;const m={ok:['ok','Sinkronizirano'],busy:['warn','Spremam…'],local:['bad','Samo ovaj uređaj'],err:['bad','Greška spremanja'],load:['mute','Povezivanje…'],lock:['bad','Zaključano']}[k];e.innerHTML=`<i class="dt dt-${m[0]}"></i><span class="hidden sm:inline">${m[1]}</span>`}
+async function diag(){const o=document.createElement('div');o.className='ov fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 md:p-4';
+const L=['Prijavljen kao: '+((SESS&&SESS.user&&SESS.user.email)||'—'),'Baza: '+(DBR?'spojena':'nije spojena'),'Internet: '+(navigator.onLine?'da':'NE'),'Adresa: '+location.host];
+o.innerHTML=`<div class="sheet"><h3 class="font-display text-2xl font-bold uppercase tracking-wide mb-3">Stanje sinkronizacije</h3><pre class="nt text-sm" style="white-space:pre-wrap">${esc(L.join('\n'))}</pre><div class="flex flex-wrap gap-2 mt-4"><button class="btn btn-acc" id="d1">Pokušaj ponovno</button><button class="btn" id="d2">Osvježi aplikaciju</button><button class="btn" id="d3">Odjava</button><span class="flex-1"></span><button class="btn" id="d4">Zatvori</button></div></div>`;document.body.append(o);
+const q=()=>o.remove();o.querySelector('#d4').onclick=q;o.onclick=e=>{if(e.target==o)q()};
+o.querySelector('#d1').onclick=async()=>{q();await initDb()};
+o.querySelector('#d2').onclick=async()=>{try{for(const k of await caches.keys())await caches.delete(k);for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister()}catch(e){}location.reload()};
+o.querySelector('#d3').onclick=()=>{q();logout()}}
+function toast(m){const e=document.createElement('div');e.className='toast';e.textContent=m;document.body.append(e);setTimeout(()=>e.remove(),3800)}
+function sync(){if(!DBR)return;pending++;setSt('busy');chain=chain.then(async()=>{for(const k in COLS){const col=DBR.collection(COLS[k]),p=PREV[k]||(PREV[k]=new Map()),cur=new Map((S[k]||[]).map(x=>[String(x.id),JSON.stringify(x)]));
+for(const[id,j]of cur)if(p.get(id)!==j){await col.doc(id).set(JSON.parse(j));p.set(id,j)}
+for(const id of[...p.keys()])if(!cur.has(id)){await col.doc(id).delete();p.delete(id)}}}).catch(e=>{console.error(e);setSt('err');toast(e&&e.code=='quota_exceeded'?'Baza je puna. Izvezi backup i obriši stare zapise.':'Spremanje nije uspjelo. Provjeri vezu i pokušaj ponovno.')}).finally(()=>{pending--;if(!pending){if($('#syncst span')?.textContent!='Greška spremanja')setSt('ok');applyRemote()}})}
+function applyRemote(){if(!booted||pending||Object.keys(LAST).length<NC)return;if($('.ov')){setTimeout(applyRemote,1000);return}for(const k in COLS){S[k]=LAST[k];PREV[k]=new Map(LAST[k].map(x=>[String(x.id),JSON.stringify(x)]))}try{localStorage.setItem('kfit',JSON.stringify(S))}catch(e){}render()}
+const save=()=>{try{localStorage.setItem('kfit',JSON.stringify(S))}catch(e){}sync()},uid=()=>Math.random().toString(36).slice(2,9);
+/* katalog iz cjenika */
+const CAT0=[];[[2,250,60],[6,700,180],[9,1000,270],[12,1300,360]].forEach(([m,p,d])=>CAT0.push({id:'on'+m,n:'Online coaching – '+m+' mj',p,t:0,d,ds:'Minimalno trajanje 2 mjeseca · '+(p/m).toFixed(1).replace('.',',')+' €/mj',a:1}));
+[[2,8],[3,12],[4,16]].forEach(([w,pm])=>[[1,40],[3,37],[6,34],[12,30]].forEach(([m,r])=>CAT0.push({id:'in'+w+'_'+m,n:'Individualni '+w+'x tjedno – '+m+' mj',p:pm*m*r,t:pm*m,d:m*30,ds:pm+' treninga mjesečno · '+r+' €/trening',a:1})));
+CAT0.push({id:'hib',n:'Hibridni paket (uživo + online)',p:0,t:0,d:30,ds:'Cijena još nije određena',a:0});
+if((S.v||0)<3){S.cat=CAT0.concat((S.cat||[]).filter(x=>![1,2,3,4].includes(x.id)));S.v=3}
+/* datumi i formati */
+const ds=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),pd=s=>{const[a,b,c]=s.split('-');return new Date(a,b-1,c)};
+const today=()=>ds(new Date()),addD=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ds(d)},daysTo=e=>Math.round((pd(e)-pd(today()))/864e5);
+const fmt=d=>d?d.split('-').reverse().join('.'):'—',eur=n=>(+n||0).toLocaleString('hr-HR',{maximumFractionDigits:2})+' €',sum=a=>a.reduce((s,x)=>s+(+x.a||0),0);
+const MOG=['siječnja','veljače','ožujka','travnja','svibnja','lipnja','srpnja','kolovoza','rujna','listopada','studenoga','prosinca'],MO=['Siječanj','Veljača','Ožujak','Travanj','Svibanj','Lipanj','Srpanj','Kolovoz','Rujan','Listopad','Studeni','Prosinac'],WD=['Pon','Uto','Sri','Čet','Pet','Sub','Ned'],WDL=['Nedjelja','Ponedjeljak','Utorak','Srijeda','Četvrtak','Petak','Subota'];
+/* poslovna logika */
+const C=id=>S.c.find(c=>c.id==id),nm=c=>c?c.f+' '+c.l:'(obrisan klijent)',live=()=>S.c.filter(c=>!c.ar);
+const used=k=>S.t.filter(t=>t.k==k.id&&t.s=='Odrađeno').length,left=k=>k.t?k.t-used(k):null;
+const pst=k=>k.e<today()?'Istekao':(k.t&&left(k)<=0?'Iskorišten':'Aktivan');
+const act=c=>c&&S.k.filter(k=>k.c==c.id&&pst(k)=='Aktivan').sort((a,b)=>b.e.localeCompare(a.e))[0],lastPk=c=>act(c)||S.k.filter(k=>k.c==c.id).sort((a,b)=>b.s.localeCompare(a.s))[0];
+const lastPay=c=>S.u.filter(u=>u.c==c.id).sort((a,b)=>b.d.localeCompare(a.d))[0];
+const paid=k=>sum(S.u.filter(u=>u.c==k.c&&(u.kid==k.id||(!u.kid&&u.pk&&u.pk==k.n)))),due=k=>Math.max(0,(+k.p||0)-paid(k));
+function nextPay(c){const un=S.k.filter(k=>k.c==c.id&&due(k)>0).sort((a,b)=>a.b.localeCompare(b.b))[0];if(un)return{d:un.b||un.s,a:due(un),w:'Nije plaćeno: '+un.n,r:1};if(c.np)return{d:c.np,a:+c.npa||0,w:'Dogovorena uplata'};const k=lastPk(c);if(k&&c.st!='Neaktivan')return{d:k.e,a:k.p,w:'Obnova paketa'};return null}
+function alerts(c){const r=[],k=lastPk(c);if(c.st=='Aktivan'&&k){if(pst(k)!='Aktivan')r.push(['r','Paket je '+(pst(k)=='Istekao'?'istekao':'iskorišten')+' – obnovi']);else{const l=left(k),d=daysTo(k.e);if(k.t&&l<=1)r.push(['r','Ostalo '+l+' '+(l==1?'trening':'treninga')]);else if(k.t&&l<=3)r.push(['y','Ostalo '+l+' treninga']);if(d<=7)r.push(['y',d==0?'Paket istječe danas':'Paket istječe za '+d+' d'])}}
+if(c.st=='Aktivan'&&!k)r.push(['y','Nema paketa']);
+S.k.filter(x=>x.c==c.id&&due(x)>0).forEach(x=>r.push([x.b&&daysTo(x.b)<0?'r':'y','Nije plaćeno '+eur(due(x))]));
+if(c.np&&daysTo(c.np)<=3)r.push([daysTo(c.np)<0?'r':'y',(daysTo(c.np)<0?'Kasni uplata od ':'Uplata očekivana ')+fmt(c.np)]);return r}
+const SEV={r:0,y:1,g:2},worst=a=>a.slice().sort((x,y)=>SEV[x[0]]-SEV[y[0]])[0];
+function lvl(c){const a=alerts(c);if(a.length)return worst(a);const k=act(c);return k?['g','Aktivan paket']:null}
+/* povijest promjena */
+function logEv(cid,x){const m=today().slice(0,7);let d=S.log.find(l=>l.id==m);if(!d){d={id:m,e:[]};S.log.push(d)}d.e.push({ts:new Date().toISOString(),c:cid||'',x});if(d.e.length>1500)d.e=d.e.slice(-1500)}
+const allLog=()=>S.log.flatMap(l=>l.e).sort((a,b)=>b.ts.localeCompare(a.ts));
+/* UI pomoćnici */
+const TN={g:'ok',y:'warn',r:'bad'},TS={Zakazano:'acc',Odrađeno:'ok',Otkazano:'mute'};
+const icons=()=>{try{window.lucide&&lucide.createIcons()}catch(e){}};
+const IC=(n,c='w-4 h-4')=>`<i data-lucide="${n}" class="${c}"></i>`;
+const pill=(k,t)=>`<span class="pill pill-${k}">${t}</span>`;
+const B=(cls,ic,txt,oc)=>`<button class="btn ${cls}" onclick="${oc}">${ic?IC(ic):''}<span>${txt}</span></button>`;
+const hd=(t,sub,a)=>`<div class="flex flex-wrap items-end justify-between gap-3 mb-5"><div class="min-w-0"><h1 class="font-display text-3xl md:text-4xl font-bold tracking-tight uppercase">${t}</h1>${sub?`<p class="text-mute text-sm mt-0.5">${sub}</p>`:''}</div><div class="flex flex-wrap items-center gap-2">${a||''}</div></div>`;
+const stat=(l,v,ic,tone,oc)=>`<div class="card p-4 flex items-start gap-3 min-w-0 ${oc?'cursor-pointer hover:bg-soft':''}" ${oc?`role="button" tabindex="0" onclick="${oc}"`:''}><span class="ibub ibub-${tone||'acc'}">${IC(ic,'w-5 h-5')}</span><div class="min-w-0"><div class="text-xs text-mute">${l}</div><div class="font-display text-2xl md:text-3xl font-bold leading-tight tnum truncate">${v}</div></div></div>`;
+const sec=(t,ic,body,extra,btn)=>`<section class="card p-4 md:p-5 min-w-0 ${extra||''}"><div class="flex items-center justify-between gap-2 mb-3"><h3 class="flex items-center gap-2 font-display text-xl font-semibold uppercase tracking-wide min-w-0">${IC(ic,'w-5 h-5 text-acc flex-none')}<span class="truncate">${t}</span></h3>${btn||''}</div>${body}</section>`;
+const empty=t=>`<div class="text-sm text-mute py-2">${t}</div>`;
+const av=(c,l)=>c.photo?`<img class="av ${l?'av-l':''}" src="${c.photo}" alt="">`:`<span class="av ${l?'av-l':''}">${esc(((c.f||'')[0]||'')+((c.l||'')[0]||''))}</span>`;
+const barCls=k=>{const l=left(k);return l<=1?'b':l<=3?'w':''};
+let V='dash',SEL=null,CAL={m:'month',d:today(),s:today()},FL={q:'',f:''},FF={a:'',b:'',c:'',s:'',m:''},LOCK=false;
+const rd=f=>new Promise(r=>{const o=new FileReader;o.onload=()=>{const i=new Image;i.onload=()=>{const s=160/Math.min(i.width,i.height),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.7))};i.src=o.result};o.readAsDataURL(f)});
+const PM=['Gotovina','Kartica','Transfer'];
+/* modal: polja [id, oznaka, tip, vrijednost, opcije, puna širina] */
+function modal(t,f,ok,del,delTxt){const m=document.createElement('div');m.className='ov fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 md:p-4';
+const fld=x=>x[2]=='head'?`<div class="eyebrow sm:col-span-2 pt-2">${x[1]}</div>`:`<label class="block text-xs font-medium text-mute ${x[2]=='textarea'||x[5]?'sm:col-span-2':''}">${x[1]}${x[2]=='select'?`<select class="inp mt-1 text-ink" id="f_${x[0]}">${x[4].map(function F(o){if(o&&o.g)return`<optgroup label="${esc(o.g)}">${o.o.map(F).join('')}</optgroup>`;const[v,l]=Array.isArray(o)?o:[o,o];return`<option value="${esc(v)}" ${v==x[3]?'selected':''}>${esc(l)}</option>`}).join('')}</select>`:x[2]=='textarea'?`<textarea class="inp mt-1 text-ink" id="f_${x[0]}">${esc(x[3])}</textarea>`:`<input class="inp mt-1 text-ink" id="f_${x[0]}" type="${x[2]}" value="${esc(x[3])}" ${x[2]=='file'?'accept="image/*"':''} ${x[2]=='number'?'inputmode="decimal" step="any"':''}>`}</label>`;
+m.innerHTML=`<div class="sheet" role="dialog" aria-modal="true"><div class="flex items-center justify-between mb-4"><h3 class="font-display text-2xl font-bold uppercase tracking-wide">${t}</h3><button class="icon-btn" id="mx0" aria-label="Zatvori">${IC('x','w-5 h-5')}</button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${f.map(fld).join('')}</div><div class="flex items-center gap-2 mt-5">${del?`<button class="btn btn-bad" id="mdel">${IC('trash-2')}<span>${delTxt||'Obriši'}</span></button>`:''}<span class="flex-1"></span><button class="btn" id="mx">Odustani</button><button class="btn btn-acc" id="mok">Spremi</button></div></div>`;
+document.body.append(m);icons();const q=()=>m.remove();m.querySelector('#mx').onclick=q;m.querySelector('#mx0').onclick=q;m.onclick=e=>{if(e.target==m)q()};
+if(del){let armed=0,tm=null;const bt=m.querySelector('#mdel'),lb=bt.querySelector('span'),o=lb.textContent;bt.onclick=()=>{if(!armed){armed=1;lb.textContent='Klikni ponovno za potvrdu';tm=setTimeout(()=>{armed=0;lb.textContent=o},4000);return}clearTimeout(tm);del();q();save();render()}}
+m.querySelector('#mok').onclick=async()=>{const v={};for(const x of f){if(x[2]=='head')continue;const e=m.querySelector('#f_'+x[0]);v[x[0]]=x[2]=='file'?(e.files[0]?await rd(e.files[0]):null):e.value}if(ok(v)===false)return;q();save();render()};}
+function confirmBtn(btn,fn){if(btn.dataset.a){fn();return}btn.dataset.a=1;const s=btn.querySelector('span'),o=s.textContent;s.textContent='Klikni ponovno za potvrdu';setTimeout(()=>{if(btn.isConnected){delete btn.dataset.a;s.textContent=o}},4000)}
+const GROUPS=['Online coaching','Individualni – 2x tjedno','Individualni – 3x tjedno','Individualni – 4x tjedno','Hibridni','Ostalo'];
+const grp=x=>{if(x.g)return x.g;const i=String(x.id),m=i.match(/^in(\d)_/);return /^on/.test(i)?GROUPS[0]:m?'Individualni – '+m[1]+'x tjedno':i=='hib'?'Hibridni':'Ostalo'};
+const catOpts=(none)=>{const cs=S.cat.filter(x=>x.a);return(none?[['','Bez paketa']]:[]).concat(GROUPS.map(g=>({g,o:cs.filter(x=>grp(x)==g).sort((a,b)=>a.d-b.d).map(x=>[x.id,x.n+' ('+eur(x.p)+')'])})).filter(g=>g.o.length))};
+const NAV=[['dash','Pregled','layout-dashboard'],['cl','Klijenti','users'],['cal','Kalendar','calendar-days'],['fin','Financije','wallet'],['cat','Paketi','package']];
+function go(v,id){if(LOCK)return;V=v;SEL=id||null;scrollTo(0,0);render()}
+function render(){if(LOCK)return;const on=k=>V==k||(V=='pr'&&k=='cl');
+$('#nav').innerHTML=NAV.map(([k,l,i])=>`<button class="${on(k)?'on':''}" onclick="go('${k}')">${IC(i,'w-4 h-4')}${l}</button>`).join('');
+$('#tabs').innerHTML=NAV.map(([k,l,i])=>`<button class="${on(k)?'on':''}" onclick="go('${k}')">${IC(i,'w-6 h-6')}<span>${l}</span></button>`).join('');
+$('#main').innerHTML=({dash:vDash,cl:vCl,pr:vPr,cal:vCal,fin:vFin,cat:vCat,set:vSet})[V]();icons();if(V=='fin')drawChart()}
+/* KLIJENTI */
+const ST=['Aktivan','Neaktivan','Pauza'],SV=['Individualni trening','Online coaching','Paket treninga'];
+function newClM(){const cs=S.cat.filter(x=>x.a);
+modal('Novi klijent',[['f','Ime','text',''],['l','Prezime','text',''],['tel','Telefon','tel',''],['em','Email','email',''],['bd','Datum rođenja','date',''],['sd','Datum početka','date',today()],['sv','Vrsta suradnje','select',SV[0],SV],['photo','Fotografija','file'],['goal','Cilj','textarea',''],
+['_h','Paket i uplata','head'],['cat','Paket','select','',catOpts(1),1],['p','Cijena (€)','number',''],['pd','Datum uplate (prazno = još nije platio)','date',today()],['m','Način plaćanja','select','Gotovina',PM],['note','Napomena','textarea','']],v=>{
+if(!v.f.trim()){toast('Unesi ime klijenta.');return false}
+const c={id:uid(),f:v.f.trim(),l:v.l.trim(),tel:v.tel,em:v.em,bd:v.bd,sd:v.sd||today(),sv:v.sv,goal:v.goal,st:'Aktivan',photo:v.photo,notes:[]};
+if(v.note.trim())c.notes.push({ts:new Date().toISOString(),txt:v.note.trim()});S.c.push(c);logEv(c.id,'Klijent dodan');
+const x=S.cat.find(y=>y.id==v.cat);if(x){const p=v.p===''?x.p:+v.p,k={id:uid(),c:c.id,n:x.n,t:x.t,s:c.sd,e:addD(c.sd,x.d||30),b:v.pd||c.sd,p};S.k.push(k);logEv(c.id,'Dodan paket '+x.n+' ('+eur(p)+')');
+if(v.pd&&p){S.u.push({id:uid(),c:c.id,kid:k.id,d:v.pd,a:p,m:v.m,pk:x.n,n:''});logEv(c.id,'Uplata '+eur(p)+' ('+v.m+')')}}
+SEL=c.id;V='pr'},null,null);
+const s=document.querySelector('#f_cat'),p=document.querySelector('#f_p');s.onchange=()=>{const x=S.cat.find(y=>y.id==s.value);p.value=x?x.p:''};}
+function clM(c){modal('Uredi klijenta',[['photo','Nova fotografija','file'],['sd','Početak suradnje','date',c.sd||''],['f','Ime','text',c.f||''],['l','Prezime','text',c.l||''],['tel','Telefon','tel',c.tel||''],['em','Email','email',c.em||''],['bd','Datum rođenja','date',c.bd||''],['st','Status','select',c.st||'Aktivan',ST],['sv','Tip usluge','select',c.sv||SV[0],SV],['np','Sljedeća očekivana uplata','date',c.np||''],['npa','Očekivani iznos (€)','number',c.npa||''],['goal','Cilj klijenta','textarea',c.goal||'']],v=>{if(!v.f.trim()){toast('Unesi ime klijenta.');return false}const p=v.photo||c.photo,ch=c.st!=v.st;Object.assign(c,v,{photo:p});logEv(c.id,ch?'Status promijenjen u '+v.st:'Podaci klijenta uređeni')})}
+function archive(id,on){const c=C(id);c.ar=on?1:0;if(on)c.st='Neaktivan';logEv(id,on?'Klijent arhiviran':'Klijent vraćen iz arhive');save();render();toast(on?'Klijent je arhiviran. Podaci su sačuvani.':'Klijent je vraćen iz arhive.')}
+function purge(id){const c=C(id);S.c=S.c.filter(x=>x.id!=id);S.k=S.k.filter(x=>x.c!=id);S.u=S.u.filter(x=>x.c!=id);S.t=S.t.filter(x=>x.c!=id);logEv('','Trajno obrisan klijent '+nm(c)+' sa svim podacima');V='cl';save();render();toast('Klijent je trajno obrisan.')}
+const cMatch=c=>{const a=act(c),q=FL.q.toLowerCase(),f=FL.f;if(f=='ar')return c.ar&&(!q||(c.f+' '+c.l).toLowerCase().includes(q));if(c.ar)return false;if(q&&!(c.f+' '+c.l).toLowerCase().includes(q))return false;if(!f)return true;if(ST.includes(f))return c.st==f;if(f=='exp')return a&&daysTo(a.e)<=7;if(f=='low')return a&&a.t&&left(a)<=3;if(f=='due')return S.k.some(k=>k.c==c.id&&due(k)>0);return c.sv==f};
+const ccard=c=>{const k=lastPk(c),p=lastPay(c),a=lvl(c),np=nextPay(c);return`<div class="card p-4 cursor-pointer" role="button" tabindex="0" onclick="go('pr','${c.id}')"><div class="flex items-center gap-3">${av(c)}<div class="min-w-0 flex-1"><div class="font-semibold truncate">${esc(nm(c))}</div><div class="text-xs text-mute truncate">${c.sv}${c.tel?' · '+esc(c.tel):''}</div></div>${pill(c.st=='Aktivan'?'ok':c.st=='Pauza'?'warn':'mute',c.st)}</div>${k?`<div class="mt-3">${k.t?`<div class="flex justify-between text-sm mb-1"><span class="text-mute">Preostalo treninga</span><b class="tnum">${left(k)} / ${k.t}</b></div><div class="bar"><i class="${barCls(k)}" style="width:${Math.min(100,used(k)/k.t*100)}%"></i></div>`:`<div class="text-sm text-mute">${esc(k.n)}</div>`}<div class="flex justify-between gap-2 text-xs text-mute mt-2"><span>Istek ${fmt(k.e)}</span><span class="text-right">${p?'Uplata '+fmt(p.d)+' · '+eur(p.a):'Nema uplata'}</span></div></div>`:`<div class="text-xs text-mute mt-3">Nema paketa</div>`}${a&&a[0]!='g'?`<div class="mt-2">${pill(TN[a[0]],a[1])}</div>`:''}</div>`};
+function rows(l){return l.map(c=>{const k=lastPk(c),p=lastPay(c),a=lvl(c),n=(c.notes||[]).slice(-1)[0],np=nextPay(c);return`<tr class="k" onclick="go('pr','${c.id}')"><td><div class="flex items-center gap-3"><span class="dt dt-${a?TN[a[0]]:'mute'}" title="${a?esc(a[1]):'Bez paketa'}"></span>${av(c)}<b>${esc(nm(c))}</b></div></td><td>${esc(c.tel)}</td><td>${esc(c.em)}</td><td>${fmt(c.sd)}</td><td>${pill(c.st=='Aktivan'?'ok':c.st=='Pauza'?'warn':'mute',c.st)}</td><td>${c.sv}</td><td>${k?(k.t||'∞'):'—'}</td><td>${k?used(k):'—'}</td><td>${k?(k.t?`<b class="${left(k)<=1?'text-[var(--bad)]':left(k)<=3?'text-[var(--warn)]':''}">${left(k)}</b>`:'∞'):'—'}</td><td>${k?fmt(k.s):'—'}</td><td>${k?fmt(k.e):'—'}</td><td>${p?fmt(p.d):'—'}</td><td>${p?eur(p.a):'—'}</td><td>${np?`<span class="${np.r?'text-[var(--bad)] font-semibold':''}">${fmt(np.d)} · ${eur(np.a)}</span>`:'—'}</td><td class="max-w-[220px] truncate">${n?esc(n.txt.slice(0,40)):''}</td></tr>`}).join('')}
+function list(){const l=S.c.filter(cMatch).sort((a,b)=>nm(a).localeCompare(nm(b),'hr'));if(!l.length)return`<div class="card p-8 text-center text-mute">${live().length||FL.f=='ar'?'Nijedan klijent ne odgovara pretrazi.':'Nema klijenata. Dodaj prvog gumbom „Dodaj klijenta”.'}</div>`;
+return`<div class="md:hidden grid gap-3">${l.map(ccard).join('')}</div><div class="hidden md:block card overflow-x-auto"><table class="tbl"><thead><tr>${['Klijent','Telefon','Email','Početak','Status','Usluga','Kupljeno','Iskorišteno','Preostalo','Početak paketa','Istek paketa','Zadnja uplata','Iznos','Sljedeća uplata','Napomene'].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows(l)}</tbody></table></div>`}
+function refList(){$('#lst').innerHTML=list();icons()}
+function vCl(){const ar=S.c.filter(c=>c.ar).length;return hd('Klijenti',live().length+' u evidenciji'+(ar?' · '+ar+' u arhivi':''),B('btn-acc','user-plus','Dodaj klijenta','newClM()'))+`<div class="flex flex-col sm:flex-row gap-2 mb-4"><div class="relative flex-1">${IC('search','w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-mute')}<input id="q" class="inp" style="padding-left:2.5rem" placeholder="Pretraži po imenu i prezimenu" value="${esc(FL.q)}" oninput="FL.q=this.value;refList()"></div><select id="flt" class="inp sm:w-64" onchange="FL.f=this.value;refList()">${[['','Svi klijenti'],['Aktivan','Aktivni'],['Neaktivan','Neaktivni'],['Pauza','Pauza'],['exp','Paket uskoro istječe'],['low','Preostalo malo treninga'],['due','Nije platio'],['Online coaching','Online coaching'],['Individualni trening','Individualni trening'],['Paket treninga','Paket treninga'],['ar','Arhivirani']].map(o=>`<option value="${o[0]}" ${FL.f==o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div><div id="lst">${list()}</div>`}
+/* PROFIL */
+function pkM(c,k){if(k){modal('Uredi paket',[['n','Naziv','text',k.n,null,1],['t','Ukupno treninga (0 = neograničeno)','number',k.t],['p','Cijena (€)','number',k.p],['b','Datum kupnje','date',k.b],['s','Datum početka','date',k.s],['e','Datum isteka','date',k.e]],v=>{Object.assign(k,v,{t:+v.t,p:+v.p});logEv(k.c,'Paket uređen: '+k.n)},()=>{S.k=S.k.filter(x=>x.id!=k.id);S.t.forEach(t=>{if(t.k==k.id)t.k=null});logEv(k.c,'Paket obrisan: '+k.n)});return}
+if(!S.cat.some(x=>x.a)){toast('Prvo definiraj aktivan paket u sekciji Paketi.');return}const f0=S.cat.filter(x=>x.a)[0];
+modal('Dodaj paket',[['cat','Paket','select',f0.id,catOpts(),1],['p','Cijena (€)','number',f0.p],['b','Datum kupnje','date',today()],['s','Datum početka','date',today()],['pay','Evidentiraj uplatu','select','Da',['Da','Ne']],['m','Način plaćanja','select','Gotovina',PM]],v=>{const x=S.cat.find(y=>y.id==v.cat),p=v.p===''?x.p:+v.p,k={id:uid(),c:c.id,n:x.n,t:x.t,s:v.s,e:addD(v.s,x.d||30),b:v.b,p};S.k.push(k);logEv(c.id,'Dodan paket '+x.n+' ('+eur(p)+')');if(v.pay=='Da'&&p){S.u.push({id:uid(),c:c.id,kid:k.id,d:v.b,a:p,m:v.m,pk:x.n,n:''});logEv(c.id,'Uplata '+eur(p)+' ('+v.m+')')}});
+const s=$('#f_cat'),p=$('#f_p');s.onchange=()=>{const x=S.cat.find(y=>y.id==s.value);p.value=x?x.p:''}}
+function uM(c,u){u=u||{};const ks=S.k.filter(k=>k.c==c.id).sort((a,b)=>b.s.localeCompare(a.s)),dk=u.id?(u.kid||''):((ks.find(k=>due(k)>0)||act(c)||{}).id||''),dkk=ks.find(k=>k.id==dk);
+modal(u.id?'Uredi uplatu':'Nova uplata',[['d','Datum uplate','date',u.d||today()],['a','Iznos (€)','number',u.id?u.a:(dkk&&due(dkk)?due(dkk):'')],['m','Način plaćanja','select',u.m||'Gotovina',PM],['kid','Za paket','select',dk,[['','Bez paketa / ostalo']].concat(ks.map(k=>[k.id,k.n+' · '+fmt(k.s)]))],['n','Napomena','textarea',u.n||'']],v=>{if(!+v.a){toast('Unesi iznos.');return false}v.a=+v.a;const k=ks.find(x=>x.id==v.kid);v.pk=k?k.n:(u.pk||'Ostalo');if(u.id){Object.assign(u,v);logEv(c.id,'Uplata uređena: '+eur(v.a)+' ('+fmt(v.d)+')')}else{S.u.push({id:uid(),c:c.id,...v});logEv(c.id,'Uplata '+eur(v.a)+' ('+v.m+')')}},u.id&&(()=>{S.u=S.u.filter(x=>x.id!=u.id);logEv(c.id,'Uplata obrisana: '+eur(u.a)+' od '+fmt(u.d))}))}
+const TT=['Snaga','Hipertrofija','Kondicija','Mobilnost','Online check-in','Ostalo'];
+function trM(t){t=t||{};const e=!!t.id,ps=live().filter(c=>c.st!='Neaktivan'||c.id==t.c).sort((a,b)=>nm(a).localeCompare(nm(b),'hr'));if(!ps.length){toast('Prvo dodaj klijenta.');return}
+modal(e?'Detalji treninga':(t.s=='Odrađeno'?'Evidentiraj trening':'Novi trening'),[['c','Klijent','select',t.c||ps[0].id,ps.map(c=>[c.id,nm(c)]),1],['d','Datum','date',t.d||today()],['tm','Vrijeme','time',t.tm||'10:00'],['du','Trajanje (min)','number',t.du||60],['ty','Vrsta treninga','select',t.ty||'Snaga',TT],['s','Status','select',t.s||'Zakazano',['Zakazano','Odrađeno','Otkazano'],1],['n','Napomena trenera','textarea',t.n||'']],v=>{v.du=+v.du;const was=t.s;
+if(e){if(v.c!=t.c)t.k=null;Object.assign(t,v)}else{t=Object.assign({id:uid(),k:null},v);S.t.push(t)}
+if(!t.k&&t.s!='Otkazano'){const a=act(C(t.c));t.k=a?a.id:null}
+const n=nm(C(t.c)).split(' ')[0];logEv(t.c,e?(was!=t.s?'Trening '+fmt(t.d)+' '+t.tm+': '+was+' → '+t.s:'Trening '+fmt(t.d)+' uređen'):'Trening '+fmt(t.d)+' '+t.tm+' ('+t.s.toLowerCase()+')');
+if(t.s=='Odrađeno'&&!t.k)toast('Trening je spremljen, ali '+n+' nema aktivan paket.');else if(t.s=='Odrađeno'&&was!='Odrađeno'){const k=S.k.find(x=>x.id==t.k);if(k&&k.t)toast('Preostalo treninga: '+left(k)+' / '+k.t)}else if(was=='Odrađeno'&&t.s!='Odrađeno')toast('Trening je vraćen u paket.')},e&&(()=>{S.t=S.t.filter(x=>x.id!=t.id);logEv(t.c,'Trening '+fmt(t.d)+' obrisan')}))}
+function setTS(id,s){const t=S.t.find(x=>x.id==id);if(!t)return;const was=t.s;t.s=s;if(!t.k&&s=='Odrađeno'){const a=act(C(t.c));t.k=a?a.id:null}logEv(t.c,'Trening '+fmt(t.d)+' '+t.tm+': '+was+' → '+s);save();render();const k=S.k.find(x=>x.id==t.k);toast(s=='Odrađeno'?(k&&k.t?'Odrađeno. Preostalo '+left(k)+' / '+k.t:'Označeno kao odrađeno.'):'Označeno kao otkazano. Trening nije oduzet.')}
+function addNote(id){const c=C(id),v=$('#nn').value.trim();if(!v)return;c.notes=c.notes||[];c.notes.push({ts:new Date().toISOString(),txt:v});logEv(id,'Dodana bilješka');save();render()}
+const kv=(l,v)=>`<div class="lrow"><span class="text-mute text-sm">${l}</span><span class="text-right min-w-0 break-words">${esc(v||'—')}</span></div>`;
+const ed=fn=>`<button class="icon-btn flex-none" style="width:36px;height:36px" aria-label="Uredi" onclick="${fn}">${IC('pencil')}</button>`;
+function vPr(){const c=C(SEL);if(!c){V='cl';return vCl()}const ks=S.k.filter(k=>k.c==c.id).sort((a,b)=>b.s.localeCompare(a.s)),us=S.u.filter(u=>u.c==c.id).sort((a,b)=>b.d.localeCompare(a.d)),ts=S.t.filter(t=>t.c==c.id).sort((a,b)=>(b.d+b.tm).localeCompare(a.d+a.tm)),al=alerts(c),np=nextPay(c),lg=allLog().filter(x=>x.c==c.id).slice(0,25);
+return`<div class="flex flex-wrap items-center justify-between gap-4 mb-5"><div class="flex items-center gap-4 min-w-0">${av(c,1)}<div class="min-w-0"><div class="eyebrow">${esc(c.sv)}${c.ar?' · Arhiviran':''}</div><h1 class="font-display text-3xl md:text-4xl font-bold tracking-tight uppercase break-words">${esc(nm(c))}</h1><div class="flex flex-wrap gap-1.5 mt-1">${pill(c.st=='Aktivan'?'ok':c.st=='Pauza'?'warn':'mute',c.st)}${al.length?al.map(a=>pill(TN[a[0]],a[1])).join(''):act(c)?pill('ok','Aktivan paket'):''}</div></div></div><div class="flex flex-wrap gap-2">${B('','arrow-left','Klijenti',"go('cl')")}${B('','pencil','Uredi',`clM(C('${c.id}'))`)}${c.ar?B('','archive-restore','Vrati iz arhive',`archive('${c.id}',0)`)+`<button class="btn btn-bad" onclick="confirmBtn(this,()=>purge('${c.id}'))">${IC('trash-2')}<span>Obriši trajno</span></button>`:`<button class="btn" onclick="confirmBtn(this,()=>archive('${c.id}',1))">${IC('archive')}<span>Arhiviraj</span></button>`}</div></div>
+${c.ar?`<div class="card p-4 mb-4 text-sm text-mute">Klijent je arhiviran: ne pojavljuje se u pregledu, kalendaru ni filtrima. Uplate i treninzi ostaju u financijama. Trajno brisanje uklanja i njegove uplate i treninge.</div>`:''}
+<div class="grid lg:grid-cols-[340px_minmax(0,1fr)] gap-4 items-start"><div class="grid gap-4 min-w-0">
+${sec('Osnovni podaci','contact',`<div>${kv('Ime',c.f)}${kv('Prezime',c.l)}${kv('Telefon',c.tel)}${kv('Email',c.em)}${kv('Datum rođenja',fmt(c.bd))}${kv('Početak suradnje',fmt(c.sd))}${kv('Status',c.st)}${kv('Sljedeća uplata',np?fmt(np.d)+' · '+eur(np.a):'')}<div class="lrow" style="display:block"><div class="text-mute text-sm mb-1">Cilj klijenta</div><div class="break-words">${esc(c.goal||'—')}</div></div></div>`)}
+${sec('Bilješke','notebook-pen',`<textarea id="nn" class="inp" placeholder="Ozljede, ograničenja, preferencije, dogovori, napomene nakon treninga…"></textarea><div class="mt-2">${B('btn-acc','plus','Dodaj bilješku',`addNote('${c.id}')`)}</div>${(c.notes||[]).slice().reverse().map(n=>`<div class="nt mt-3"><div class="text-xs text-mute mb-1 tnum">${new Date(n.ts).toLocaleString('hr-HR',{dateStyle:'short',timeStyle:'short'})}</div>${esc(n.txt)}</div>`).join('')}`)}
+${sec('Povijest promjena','history',lg.length?`<div>${lg.map(x=>`<div class="lrow"><span class="text-sm min-w-0 break-words">${esc(x.x)}</span><span class="text-xs text-mute tnum flex-none">${new Date(x.ts).toLocaleString('hr-HR',{dateStyle:'short',timeStyle:'short'})}</span></div>`).join('')}</div>`:empty('Promjene od danas nadalje bilježe se ovdje.'))}
+</div><div class="grid gap-4 min-w-0">
+${sec('Paket','package',ks.length?`<div class="grid gap-3">${ks.map(k=>{const u=used(k),st=pst(k),pa=paid(k),du=due(k);return`<div class="rounded-2xl p-4" style="background:var(--soft)"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="font-semibold break-words">${esc(k.n)}</div><div class="flex flex-wrap gap-1.5 mt-1">${pill(st=='Aktivan'?'ok':'bad',st)}${k.p?pill(du>0?'bad':'ok',du>0?'Nije plaćeno '+eur(du):'Plaćeno'):''}</div></div>${ed(`pkM(null,S.k.find(x=>x.id=='${k.id}'))`)}</div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm mt-3"><div><div class="text-xs text-mute">Kupljeno</div><b class="tnum">${fmt(k.b)}</b></div><div><div class="text-xs text-mute">Početak</div><b class="tnum">${fmt(k.s)}</b></div><div><div class="text-xs text-mute">Istek</div><b class="tnum">${fmt(k.e)}</b></div><div><div class="text-xs text-mute">Cijena</div><b class="tnum">${eur(k.p)}</b></div></div>${k.t?`<div class="flex justify-between text-sm mt-3 mb-1.5"><span>Iskorišteno <b class="tnum">${u} / ${k.t}</b></span><span>Preostalo <b class="tnum">${k.t-u}</b></span></div><div class="bar"><i class="${barCls(k)}" style="width:${Math.min(100,u/k.t*100)}%"></i></div>`:`<div class="text-sm mt-3">Bez ograničenja broja treninga · odrađeno <b>${u}</b></div>`}</div>`}).join('')}</div>`:empty('Klijent još nema paket.'),'',c.ar?'':B('btn-acc btn-sm','plus','Dodaj paket',`pkM(C('${c.id}'))`))}
+${sec('Uplate','banknote',us.length?`<div>${us.map(u=>`<div class="lrow"><div class="min-w-0"><div class="font-semibold tnum">${eur(u.a)} <span class="text-mute font-normal text-sm">· ${fmt(u.d)}</span></div><div class="text-xs text-mute break-words">${u.m}${u.pk?' · '+esc(u.pk):''}${u.n?' · '+esc(u.n):''}</div></div>${ed(`uM(C('${c.id}'),S.u.find(x=>x.id=='${u.id}'))`)}</div>`).join('')}<div class="lrow"><span class="text-mute">Ukupno uplaćeno</span><b class="font-display text-2xl tnum">${eur(sum(us))}</b></div></div>`:empty('Nema uplata.'),'',B('btn-acc btn-sm','plus','Dodaj uplatu',`uM(C('${c.id}'))`))}
+${sec('Treninzi','dumbbell',ts.length?`<div>${ts.map(t=>`<div class="lrow"><div class="min-w-0"><div class="font-semibold tnum">${fmt(t.d)} <span class="text-mute font-normal text-sm">· ${t.tm} · ${t.du} min</span></div><div class="text-xs text-mute break-words">${t.ty}${t.n?' · '+esc(t.n):''}</div></div><div class="flex items-center gap-2 flex-none">${pill(TS[t.s]||'mute',t.s)}${ed(`trM(S.t.find(x=>x.id=='${t.id}'))`)}</div></div>`).join('')}</div>`:empty('Nema evidentiranih treninga.'),'',c.ar?'':B('btn-acc btn-sm','plus','Evidentiraj trening',`trM({c:'${c.id}',s:'Odrađeno'})`))}
+</div></div>`}
+/* KALENDAR */
+function shift(n){const d=pd(CAL.d);if(CAL.m=='month'){d.setDate(1);d.setMonth(d.getMonth()+n)}else d.setDate(d.getDate()+n*(CAL.m=='week'?7:1));CAL.d=ds(d);if(CAL.m=='day')CAL.s=CAL.d;render()}
+const chip=t=>`<div class="ch ch-${t.s}" onclick="event.stopPropagation();trM(S.t.find(x=>x.id=='${t.id}'))">${t.tm} ${esc(C(t.c)?C(t.c).f:'?')}</div>`;
+const dayTs=d=>S.t.filter(t=>t.d==d&&!(C(t.c)||{}).ar).sort((a,b)=>a.tm.localeCompare(b.tm));
+const trRow=(t,q)=>`<div class="lrow"><button class="min-w-0 text-left flex-1" onclick="trM(S.t.find(x=>x.id=='${t.id}'))"><div class="font-semibold truncate"><span class="tnum">${t.tm}</span> · ${esc(nm(C(t.c)))}</div><div class="text-xs text-mute truncate">${t.ty} · ${t.du} min${t.n?' · '+esc(t.n):''}</div></button><div class="flex items-center gap-1.5 flex-none">${q&&t.s=='Zakazano'?`<button class="btn btn-sm" onclick="setTS('${t.id}','Odrađeno')" aria-label="Označi odrađeno">${IC('check')}<span class="hidden sm:inline">Odrađeno</span></button><button class="icon-btn" style="width:34px;height:34px" onclick="setTS('${t.id}','Otkazano')" aria-label="Otkaži">${IC('x')}</button>`:pill(TS[t.s]||'mute',t.s)}</div></div>`;
+function vCal(){const d=pd(CAL.d),SD=CAL.m=='day'?CAL.d:(CAL.s||CAL.d);let h='',title;
+const cell=(s,o)=>{const l=dayTs(s);return`<div class="cc ${o?'cc-o':''} ${s==today()?'cc-t':''} ${s==SD?'cc-s':''}" role="button" tabindex="0" onclick="CAL.s='${s}';render()"><span class="cn tnum">${pd(s).getDate()}</span><span class="hidden md:flex flex-col gap-1 w-full min-w-0">${l.slice(0,3).map(chip).join('')}${l.length>3?`<span class="text-xs text-mute">+${l.length-3} više</span>`:''}</span><span class="md:hidden flex flex-wrap gap-1 justify-center">${l.slice(0,4).map(t=>`<i class="dt dt-${TS[t.s]||'mute'}"></i>`).join('')}</span></div>`};
+const wh='<div class="cg mb-1">'+WD.map(x=>`<div class="h">${x}</div>`).join('')+'</div>';
+if(CAL.m=='month'){title=MO[d.getMonth()]+' '+d.getFullYear();const f=new Date(d.getFullYear(),d.getMonth(),1),st=addD(ds(f),-((f.getDay()+6)%7));h=wh+'<div class="cg">';for(let i=0;i<42;i++){const s=addD(st,i);if(i>=35&&pd(s).getMonth()!=d.getMonth())break;h+=cell(s,pd(s).getMonth()!=d.getMonth())}h+='</div>'}
+else if(CAL.m=='week'){const st=addD(CAL.d,-((d.getDay()+6)%7));title=fmt(st)+' – '+fmt(addD(st,6));h=wh+'<div class="cg">'+[0,1,2,3,4,5,6].map(i=>cell(addD(st,i))).join('')+'</div>'}
+else{title=WD[(d.getDay()+6)%7]+' '+fmt(CAL.d)}
+const L=dayTs(SD);
+const ag=sec(WDL[pd(SD).getDay()]+', '+fmt(SD),'clock',L.length?`<div>${L.map(t=>trRow(t,1)).join('')}</div>`:empty('Nema treninga ovaj dan.'),CAL.m=='day'?'':'mt-4',B('btn-acc btn-sm','plus','Trening',`trM({d:'${SD}'})`));
+return hd('Kalendar','',B('','calendar-check','Danas',`CAL.d=today();CAL.s=today();render()`)+B('btn-acc','plus','Zakaži trening',`trM({d:'${SD}'})`))+`<div class="flex flex-wrap items-center gap-3 mb-4"><div class="flex items-center gap-1"><button class="icon-btn" aria-label="Prethodno" onclick="shift(-1)">${IC('chevron-left','w-5 h-5')}</button><div class="font-display text-xl font-semibold text-center min-w-[9.5rem] uppercase tracking-wide">${title}</div><button class="icon-btn" aria-label="Sljedeće" onclick="shift(1)">${IC('chevron-right','w-5 h-5')}</button></div><div class="seg">${[['month','Mjesec'],['week','Tjedan'],['day','Dan']].map(m=>`<button class="${CAL.m==m[0]?'on':''}" onclick="CAL.m='${m[0]}';if(CAL.m=='day')CAL.d=CAL.s||CAL.d;render()">${m[1]}</button>`).join('')}</div><div class="flex items-center gap-3 text-xs text-mute ml-auto"><span class="flex items-center gap-1.5"><i class="dt dt-acc"></i>Zakazano</span><span class="flex items-center gap-1.5"><i class="dt dt-ok"></i>Odrađeno</span><span class="flex items-center gap-1.5"><i class="dt dt-mute"></i>Otkazano</span></div></div>${h}${ag}`}
+/* FINANCIJE */
+let CH={mv:[],yr:''},CHART=null;
+const cv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function drawChart(){const el=$('#rev');if(!el||!window.Chart)return;if(CHART){CHART.destroy();CHART=null}
+const cur=(new Date()).getFullYear()==+CH.yr?new Date().getMonth():-1,mute=cv('--mute'),line=cv('--line'),acc=cv('--acc'),mid=cv('--acc-mid'),red=matchMedia('(prefers-reduced-motion: reduce)').matches;
+Chart.defaults.font.family='Barlow, system-ui, sans-serif';
+CHART=new Chart(el,{type:'bar',data:{labels:MO.map(m=>m.slice(0,3)),datasets:[{label:'Prihod',data:CH.mv,backgroundColor:CH.mv.map((_,i)=>i==cur?acc:mid),hoverBackgroundColor:acc,borderRadius:6,borderSkipped:false,maxBarThickness:38}]},
+options:{responsive:true,maintainAspectRatio:false,animation:{duration:red?0:700,easing:'easeOutQuart'},interaction:{mode:'index',intersect:false},
+plugins:{legend:{display:false},tooltip:{backgroundColor:cv('--card'),titleColor:cv('--ink'),bodyColor:cv('--ink'),borderColor:line,borderWidth:1,padding:12,displayColors:false,titleFont:{size:13,weight:'600'},bodyFont:{size:15,weight:'600'},callbacks:{title:i=>MO[i[0].dataIndex]+' '+CH.yr,label:c=>eur(c.parsed.y)}}},
+scales:{x:{grid:{display:false},border:{display:false},ticks:{color:mute,font:{size:12}}},y:{beginAtZero:true,grid:{color:line},border:{display:false},ticks:{color:mute,maxTicksLimit:5,callback:v=>v.toLocaleString('hr-HR')+' €'}}}}})}
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>drawChart());new MutationObserver(()=>drawChart()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
+function vFin(){const t=today(),wk=addD(t,-((pd(t).getDay()+6)%7)),mo=t.slice(0,7),U=S.u,ks=S.k;if(!CH.y)CH.y=+t.slice(0,4);const yr=String(CH.y);
+const f=U.filter(u=>(!FF.a||u.d>=FF.a)&&(!FF.b||u.d<=FF.b)&&(!FF.c||u.c==FF.c)&&(!FF.s||u.pk==FF.s)&&(!FF.m||u.m==FF.m)).sort((a,b)=>b.d.localeCompare(a.d)),P=a=>sum(f.filter(a));
+const mv=MO.map((_,i)=>sum(f.filter(u=>u.d.slice(0,7)==yr+'-'+String(i+1).padStart(2,'0'))));CH.mv=mv;CH.yr=yr;
+const owed=ks.filter(k=>due(k)>0&&!(C(k.c)||{}).ar);
+const svc=[...new Set(U.map(u=>u.pk).filter(Boolean))].sort(),st=[['Danas',P(u=>u.d==t),'sun','acc'],['Ovaj tjedan',P(u=>u.d>=wk&&u.d<=t),'calendar-range','acc'],['Ovaj mjesec',P(u=>u.d.slice(0,7)==mo),'trending-up','ok'],['Ova godina',P(u=>u.d.slice(0,4)==t.slice(0,4)),'calendar','acc'],['Ukupan prihod',sum(f),'wallet','ok'],['Broj uplata',f.length,'receipt','mute'],['Prosječna vrijednost paketa',eur(ks.length?ks.reduce((s,k)=>s+(+k.p||0),0)/ks.length:0),'package','mute'],['Nenaplaćeno',eur(owed.reduce((s,k)=>s+due(k),0)),'circle-alert',owed.length?'bad':'mute']];
+const sel=(k,o,all)=>`<select class="inp" id="ff_${k}" onchange="FF.${k}=this.value;render()"><option value="">${all}</option>${o.map(x=>{const[v,l]=Array.isArray(x)?x:[x,x];return`<option value="${esc(v)}" ${FF[k]==v?'selected':''}>${esc(l)}</option>`}).join('')}</select>`;
+const lab=(l,x)=>`<label class="block text-xs font-medium text-mute">${l}<div class="mt-1">${x}</div></label>`,anyF=Object.values(FF).some(Boolean);
+return hd('Financije',anyF?'Prikaz prema odabranim filterima':'Prihodi, uplate i prosjeci',anyF?B('','filter-x','Poništi filtere',"FF={a:'',b:'',c:'',s:'',m:''};render()"):'')+`<div class="card p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">${lab('Od datuma',`<input id="ff_a" class="inp" type="date" value="${FF.a}" onchange="FF.a=this.value;render()">`)}${lab('Do datuma',`<input id="ff_b" class="inp" type="date" value="${FF.b}" onchange="FF.b=this.value;render()">`)}${lab('Klijent',sel('c',S.c.slice().sort((a,b)=>nm(a).localeCompare(nm(b),'hr')).map(c=>[c.id,nm(c)]),'Svi klijenti'))}${lab('Usluga',sel('s',svc,'Sve usluge'))}${lab('Način plaćanja',sel('m',PM,'Svi načini'))}</div>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">${st.map(s=>stat(s[0],typeof s[1]=='number'&&s[0]!='Broj uplata'?eur(s[1]):s[1],s[2],s[3])).join('')}</div>
+${sec('Prihod po mjesecima','bar-chart-3',`<div style="position:relative;height:260px"><canvas id="rev" role="img" aria-label="Prihod po mjesecima ${yr}"></canvas></div>`,'mb-4',`<div class="flex items-center gap-1"><button class="icon-btn" style="width:34px;height:34px" aria-label="Prethodna godina" onclick="CH.y--;render()">${IC('chevron-left')}</button><b class="font-display text-lg tnum">${yr}</b><button class="icon-btn" style="width:34px;height:34px" aria-label="Sljedeća godina" onclick="CH.y++;render()">${IC('chevron-right')}</button></div>`)}
+<div class="grid lg:grid-cols-[minmax(0,1fr)_380px] gap-4 items-start">
+${sec('Uplate','list',f.length?`<div>${f.slice(0,200).map(u=>`<div class="lrow"><button class="min-w-0 text-left" onclick="go('pr','${u.c}')"><div class="font-semibold truncate">${esc(nm(C(u.c)))}</div><div class="text-xs text-mute truncate">${fmt(u.d)} · ${u.m}${u.pk?' · '+esc(u.pk):''}</div></button><b class="tnum flex-none">${eur(u.a)}</b></div>`).join('')}</div><div class="lrow"><span class="text-mute">Zbroj</span><b class="font-display text-2xl tnum">${eur(sum(f))}</b></div>`:empty('Nema uplata za odabrane filtere.'))}
+${sec('Nenaplaćeni paketi','circle-alert',owed.length?`<div>${owed.map(k=>`<div class="lrow"><button class="min-w-0 text-left" onclick="go('pr','${k.c}')"><div class="font-semibold truncate">${esc(nm(C(k.c)))}</div><div class="text-xs text-mute truncate">${esc(k.n)} · od ${fmt(k.b)}</div></button><b class="tnum flex-none text-[var(--bad)]">${eur(due(k))}</b></div>`).join('')}</div>`:empty('Svi paketi su plaćeni.'))}
+</div>`}
+/* PAKETI */
+function catM(x){x=x||{};modal(x.id?'Uredi paket':'Novi paket / usluga',[['n','Naziv','text',x.n||'',null,1],['p','Cijena (€)','number',x.p??''],['t','Broj treninga (0 = neograničeno)','number',x.t??''],['d','Trajanje (dana)','number',x.d||30],['g','Skupina','select',x.id?grp(x):'Ostalo',GROUPS],['ds','Opis','textarea',x.ds||''],['a','Status','select',x.a===0?'0':'1',[['1','Aktivno'],['0','Neaktivno']]]],v=>{if(!v.n.trim()){toast('Unesi naziv.');return false}Object.assign(v,{p:+v.p,t:+v.t,d:+v.d,a:+v.a});if(x.id)Object.assign(x,v);else S.cat.push({id:uid(),...v});logEv('','Katalog: '+(x.id?'uređen':'dodan')+' paket '+v.n)},x.id&&(()=>{S.cat=S.cat.filter(y=>y.id!=x.id);logEv('','Katalog: obrisan paket '+x.n)}))}
+function vCat(){const card=x=>{const n=S.k.filter(k=>k.n==x.n&&pst(k)=='Aktivan').length;return`<div class="card p-4 flex flex-col gap-2 min-w-0 ${x.a?'':'opacity-60'}"><div class="flex items-start justify-between gap-2"><div class="font-semibold break-words min-w-0">${esc(x.n)}</div>${pill(x.a?'ok':'mute',x.a?'Aktivno':'Neaktivno')}</div><div class="font-display text-3xl font-bold tnum">${eur(x.p)}</div><div class="text-sm text-mute">${x.t?x.t+' treninga':'Bez ograničenja treninga'} · ${x.d} dana</div>${x.ds?`<p class="text-sm text-mute break-words">${esc(x.ds)}</p>`:''}<div class="mt-auto pt-2 flex items-center justify-between gap-2">${B('btn-sm','pencil','Uredi',`catM(S.cat.find(y=>y.id=='${x.id}'))`)}${n?`<span class="text-xs text-mute">${n} aktivn${n==1?'i':'ih'}</span>`:''}</div></div>`};
+return hd('Paketi i usluge',S.cat.length+' paketa u katalogu',B('btn-acc','plus','Novi paket','catM()'))+GROUPS.map(g=>{const l=S.cat.filter(x=>grp(x)==g).sort((a,b)=>a.d-b.d||a.p-b.p);return l.length?`<h2 class="font-display text-2xl font-semibold uppercase tracking-wide mt-7 mb-3">${g} <span class="text-mute text-base font-medium normal-case">· ${l.length}</span></h2><div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">${l.map(card).join('')}</div>`:''}).join('')}
+/* SIGURNOST I BACKUP */
+async function exportB(btn){const data=JSON.stringify({app:'K-FIT',v:4,exported:new Date().toISOString(),data:{c:S.c,k:S.k,u:S.u,t:S.t,cat:S.cat,log:S.log}},null,1),fn='kfit-backup-'+today()+'.json';
+if(DL){try{await DL.save({filename:fn,data:new Blob([data],{type:'application/json'})});toast('Backup je spremljen.');return}catch(e){if(e&&e.code=='declined')return;console.error(e)}}
+const ta=$('#bkt');ta.hidden=false;ta.value=data;ta.select();try{await navigator.clipboard.writeText(data);toast('Backup je kopiran u međuspremnik. Zalijepi ga u datoteku i spremi.')}catch(e){toast('Označi tekst ispod, kopiraj ga i spremi u datoteku.')}}
+let IMP=null;
+function readImp(inp){const f=inp.files[0];if(!f)return;const r=new FileReader;r.onload=()=>{try{const j=JSON.parse(r.result),d=j.data||j;if(!Array.isArray(d.c)||!Array.isArray(d.k))throw 0;IMP=d;$('#impinfo').innerHTML=`Datoteka sadrži <b>${d.c.length}</b> klijenata, <b>${(d.u||[]).length}</b> uplata i <b>${(d.t||[]).length}</b> treninga${j.exported?' (izvezeno '+new Date(j.exported).toLocaleString('hr-HR')+')':''}.`;$('#impgo').hidden=false}catch(e){IMP=null;$('#impinfo').textContent='Ovo nije K-FIT backup datoteka.';$('#impgo').hidden=true}};r.readAsText(f)}
+function doImp(){if(!IMP)return;for(const k of['c','k','u','t','cat','log'])S[k]=Array.isArray(IMP[k])?IMP[k]:(k=='cat'?S.cat:[]);logEv('','Podaci vraćeni iz backupa');IMP=null;save();go('dash');toast('Podaci su vraćeni iz backupa.')}
+function vSet(){const lg=allLog().slice(0,60);
+return hd('Sigurnost i backup','Pristup, kopije podataka i povijest promjena')+`<div class="grid lg:grid-cols-2 gap-4 items-start">
+${sec('Pristup','lock',`<div class="text-sm grid gap-2"><p>Prijavljen si kao <b>${esc((SESS&&SESS.user&&SESS.user.email)||'—')}</b>. Podaci su u bazi u EU i dostupni samo nakon prijave; registracija novih korisnika je isključena.</p><p class="text-mute">Klijente ne briši, nego ih arhiviraj: arhiva čuva uplate i treninge, a trajno brisanje traži dvostruku potvrdu.</p></div><div class="mt-3 flex flex-wrap gap-2">${pill(DBR?'ok':'bad',DBR?'Baza povezana':'Baza nije povezana')}${pill('mute',S.c.length+' klijenata · '+S.u.length+' uplata · '+S.t.length+' treninga')}</div><div class="mt-3">${B('','log-out','Odjava','logout()')}</div>`)}
+${sec('Backup','hard-drive-download',`<p class="text-sm text-mute mb-3">Preuzmi kopiju svih podataka u JSON datoteci. Preporuka: jednom mjesečno, i prije većih izmjena.</p>${B('btn-acc','download','Preuzmi backup','exportB(this)')}<textarea id="bkt" class="inp mt-3 text-xs" hidden readonly></textarea>
+<div class="eyebrow mt-5 mb-2">Vrati iz backupa</div><input id="impf" type="file" accept="application/json,.json" class="inp" onchange="readImp(this)"><p id="impinfo" class="text-sm text-mute mt-2">Vraćanje zamjenjuje sve trenutne podatke sadržajem datoteke.</p><button id="impgo" class="btn btn-bad mt-2" hidden onclick="confirmBtn(this,doImp)">${IC('upload')}<span>Zamijeni podatke backupom</span></button>`)}
+${sec('Povijest promjena','history',lg.length?`<div>${lg.map(x=>`<div class="lrow"><span class="text-sm min-w-0 break-words">${x.c&&C(x.c)?`<button class="font-semibold hover:underline" onclick="go('pr','${x.c}')">${esc(nm(C(x.c)))}</button> · `:''}${esc(x.x)}</span><span class="text-xs text-mute tnum flex-none">${new Date(x.ts).toLocaleString('hr-HR',{dateStyle:'short',timeStyle:'short'})}</span></div>`).join('')}</div>`:empty('Još nema zabilježenih promjena.'),'lg:col-span-2')}
+</div>`}
+/* DASHBOARD */
+function vDash(){const t=today(),mo=t.slice(0,7),pm=ds(new Date(new Date().getFullYear(),new Date().getMonth()-1,1)).slice(0,7),A=live().filter(c=>c.st=='Aktivan'),LV=live(),L=A.map(c=>({c,k:act(c),a:alerts(c)}));
+const exp=L.filter(x=>x.k&&daysTo(x.k.e)<=7),todayT=dayTs(t),up=S.t.filter(x=>x.s=='Zakazano'&&x.d>t&&!(C(x.c)||{}).ar).sort((a,b)=>(a.d+a.tm).localeCompare(b.d+b.tm)).slice(0,6);
+const need=LV.filter(c=>c.st!='Neaktivan').map(c=>({c,a:alerts(c)})).filter(x=>x.a.length).sort((a,b)=>SEV[worst(a.a)[0]]-SEV[worst(b.a)[0]]);
+const exs=LV.map(c=>({c,n:nextPay(c)})).filter(x=>x.n&&daysTo(x.n.d)<=14).sort((a,b)=>a.n.d.localeCompare(b.n.d));
+const recent=S.u.slice().sort((a,b)=>b.d.localeCompare(a.d)).slice(0,6),pastDue=S.t.filter(x=>x.s=='Zakazano'&&x.d<t&&!(C(x.c)||{}).ar).length;
+const li=(a,f,e)=>a.length?`<div>${a.map(f).join('')}</div>`:empty(e),cl=c=>`<button class="font-semibold text-left truncate hover:underline min-w-0" onclick="go('pr','${c.id}')">${esc(nm(c))}</button>`;
+const owed=S.k.filter(k=>due(k)>0&&!(C(k.c)||{}).ar),dn=new Date();
+const stats=[['Aktivni klijenti',A.length,'users','acc',"FL={q:'',f:'Aktivan'};go('cl')"],['Neaktivni klijenti',LV.filter(c=>c.st=='Neaktivan').length,'user-minus','mute',"FL={q:'',f:'Neaktivan'};go('cl')"],['Paket uskoro istječe',exp.length,'hourglass',exp.length?'warn':'mute',"FL={q:'',f:'exp'};go('cl')"],['Nenaplaćeno',eur(owed.reduce((s,k)=>s+due(k),0)),'circle-alert',owed.length?'bad':'mute',"FL={q:'',f:'due'};go('cl')"],['Prihod ovaj mjesec',eur(sum(S.u.filter(u=>u.d.slice(0,7)==mo))),'trending-up','ok',"go('fin')"],['Prihod prošli mjesec',eur(sum(S.u.filter(u=>u.d.slice(0,7)==pm))),'wallet','acc',"go('fin')"]];
+return hd(WDL[dn.getDay()]+', '+dn.getDate()+'. '+MOG[dn.getMonth()],LV.length?A.length+' aktivnih klijenata · '+todayT.filter(x=>x.s!='Otkazano').length+' treninga danas · '+need.length+' za riješiti':'Dodaj prvog klijenta za početak',B('btn-acc','user-plus','Dodaj klijenta','newClM()'))+`
+<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">${stats.map(s=>stat(...s)).join('')}</div>
+<div class="grid md:grid-cols-2 gap-4">
+${sec('Danas','calendar-check',(todayT.length?`<div>${todayT.map(x=>trRow(x,1)).join('')}</div>`:empty('Danas nema zakazanih treninga.'))+(pastDue?`<button class="text-sm text-[var(--warn)] font-semibold mt-2 hover:underline" onclick="CAL.m='month';go('cal')">${pastDue} prošl${pastDue==1?'i trening nije označen':'ih treninga nije označeno'} kao odrađen ili otkazan</button>`:''),'today',B('btn-sm','plus','Trening',`trM({d:'${t}'})`))}
+${sec('Potrebna akcija','triangle-alert',li(need.slice(0,10),x=>`<div class="lrow"><span class="flex items-center gap-2 min-w-0"><i class="dt dt-${TN[worst(x.a)[0]]}"></i>${cl(x.c)}</span><span class="flex flex-wrap justify-end gap-1">${x.a.map(a=>pill(TN[a[0]],a[1])).join('')}</span></div>`,'Sve je pod kontrolom.')+(need.length>10?`<div class="text-xs text-mute pt-2">+${need.length-10} još</div>`:''))}
+${sec('Preostali treninzi','dumbbell',li(L.filter(x=>x.k&&x.k.t).sort((a,b)=>left(a.k)-left(b.k)),x=>`<div class="lrow">${cl(x.c)}<div class="flex items-center gap-3 flex-none"><div class="bar w-20 hidden sm:block"><i class="${barCls(x.k)}" style="width:${Math.min(100,used(x.k)/x.k.t*100)}%"></i></div>${pill(left(x.k)<=1?'bad':left(x.k)<=3?'warn':'mute',left(x.k)+' / '+x.k.t)}</div></div>`,'Nema aktivnih paketa s brojem treninga.'))}
+${sec('Uplate koje očekujem','banknote',li(exs,x=>`<div class="lrow"><div class="min-w-0">${cl(x.c)}<div class="text-xs text-mute truncate">${esc(x.n.w)}</div></div><span class="text-sm tnum flex-none text-right ${daysTo(x.n.d)<0?'text-[var(--bad)] font-semibold':'text-mute'}">${fmt(x.n.d)}<br><b class="text-ink">${eur(x.n.a)}</b></span></div>`,'Ništa u sljedećih 14 dana.'))}
+${sec('Nadolazeći treninzi','calendar-clock',li(up,x=>`<div class="lrow">${cl(C(x.c)||{id:'',f:'?',l:''})}<span class="text-sm text-mute tnum flex-none">${WD[(pd(x.d).getDay()+6)%7]} ${fmt(x.d)} · ${x.tm}</span></div>`,'Nema zakazanih treninga.'),'',B('btn-sm','calendar-days','Kalendar',"go('cal')"))}
+${sec('Zadnje uplate','receipt',li(recent,u=>`<div class="lrow">${cl(C(u.c)||{id:'',f:'?',l:''})}<span class="text-sm tnum flex-none"><span class="text-mute">${fmt(u.d)}</span> · <b>${eur(u.a)}</b></span></div>`,'Još nema uplata.'),'',B('btn-sm','wallet','Financije',"go('fin')"))}
+</div>`}
+/* POKRETANJE */
+const CFG={url:'https://jcxooxyrpahcwsvvzybo.supabase.co',key:'sb_publishable_FG7mdGIEQm_VkdBDayS9DA_fO59I82d'};
+let SB=null,SESS=null;try{SB=supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:true,autoRefreshToken:true}})}catch(e){console.error(e)}
+/* sloj baze: ista sučelja (collection/doc/onSnapshot) preko Supabase tablice kdocs(col,id,data) */
+function mkDb(){const T='kdocs',ref=(c,id)=>({
+async get(){const{data,error}=await SB.from(T).select('data').eq('col',c).eq('id',String(id)).maybeSingle();if(error)throw error;return{exists:!!data,data:()=>data&&data.data}},
+async set(o){const{error}=await SB.from(T).upsert({col:c,id:String(id),data:o,updated_at:new Date().toISOString()});if(error)throw error},
+async delete(){const{error}=await SB.from(T).delete().eq('col',c).eq('id',String(id));if(error)throw error}});
+return{doc:p=>{const i=p.indexOf('/');return ref(p.slice(0,i),p.slice(i+1))},
+collection:c=>({doc:id=>ref(c,id),
+onSnapshot(cb,eb){const M=new Map(),emit=()=>cb({docs:[...M.values()].map(d=>({data:()=>d}))});
+const load=async()=>{const rows=[];for(let f=0;;f+=1000){const{data,error}=await SB.from(T).select('id,data').eq('col',c).order('id').range(f,f+999);if(error){eb&&eb(error);return}rows.push(...data);if(data.length<1000)break}M.clear();rows.forEach(r=>M.set(r.id,r.data));emit()};
+let first=1;load();
+SB.channel('kd-'+c).on('postgres_changes',{event:'*',schema:'public',table:T,filter:'col=eq.'+c},p=>{if(p.eventType=='DELETE')M.delete(p.old.id);else M.set(p.new.id,p.new.data);emit()}).subscribe(st=>{if(st=='SUBSCRIBED'){if(first)first=0;else load()}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});window.addEventListener('online',load)}})}}
+const claude={use:async n=>n=='db'?(SB&&SESS?mkDb():null):n=='downloads'?{save:async({filename,data})=>{const u=URL.createObjectURL(data),a=document.createElement('a');a.href=u;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}}:null};
+function showLogin(msg){LOCK=true;setSt('lock');$('#nav').innerHTML='';$('#tabs').innerHTML='';
+$('#main').innerHTML=`<form id="lg" class="card p-6 md:p-8 max-w-sm mx-auto mt-10 grid gap-3">${IC('lock','w-8 h-8 text-acc')}<h1 class="font-display text-3xl font-bold uppercase">Prijava</h1><label class="block text-xs font-medium text-mute">Email<input class="inp mt-1 text-ink" id="lem" type="email" autocomplete="username" required></label><label class="block text-xs font-medium text-mute">Lozinka<input class="inp mt-1 text-ink" id="lpw" type="password" autocomplete="current-password" required></label><div id="lerr" class="text-sm text-[var(--bad)]">${esc(msg||'')}</div><button class="btn btn-acc" type="submit">Prijavi se</button></form>`;icons();
+$('#lg').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;$('#lerr').textContent='';
+const{data,error}=await SB.auth.signInWithPassword({email:$('#lem').value.trim(),password:$('#lpw').value});
+if(error||!data.session){b.disabled=false;$('#lerr').textContent='Prijava nije uspjela. Provjeri email i lozinku.';return}
+SESS=data.session;LOCK=false;setSt('load');$('#main').innerHTML='<div class="text-mute py-16 text-center">Učitavanje…</div>';await initDb()}}
+async function logout(){try{await SB.auth.signOut()}catch(e){}try{localStorage.removeItem('kfit');localStorage.removeItem('kfit_m')}catch(e){}location.reload()}
+setSt('load');$('#main').innerHTML='<div class="text-mute py-16 text-center">Učitavanje…</div>';icons();
+(async()=>{if(!SB){LOCK=true;$('#main').innerHTML='<div class="card p-8 text-center">Ne mogu učitati Supabase biblioteku. Provjeri internet i osvježi stranicu.</div>';return}
+let r=null;try{r=(await SB.auth.getSession()).data.session}catch(e){}SESS=r;
+if(!SESS){showLogin();return}
+await initDb()})();
+let seen={},booted=false,SUBD=false;
+async function initDb(){if(DBR||LOCK)return;setSt('load');let db=null;try{db=await claude.use('db')}catch(e){}if(!DL){try{DL=await claude.use('downloads')}catch(e){}}
+if(!db){setSt('local');render();toast('Baza nije dostupna: podaci se spremaju samo na ovom uređaju. Klikni stanje sinkronizacije gore desno za provjeru.');return}
+const boot=async()=>{booted=true;let meta;try{meta=await db.doc('meta/state').get()}catch(e){meta=null}
+if(meta&&meta.exists){DBR=db;setSt('ok');let mg=null;try{mg=localStorage.getItem('kfit_m')}catch(e){}
+if(mg){if(!LAST.cat.length){S.c=LAST.c;S.k=LAST.k;S.u=LAST.u;S.t=LAST.t;S.log=LAST.log;for(const k in COLS)PREV[k]=new Map(LAST[k].map(x=>[String(x.id),JSON.stringify(x)]));save();render();return}applyRemote();return}
+for(const k in COLS){PREV[k]=new Map(LAST[k].map(x=>[String(x.id),JSON.stringify(x)]));const ids=new Set(LAST[k].map(x=>String(x.id)));S[k]=LAST[k].concat(k=='cat'&&LAST.cat.length?[]:(S[k]||[]).filter(x=>!ids.has(String(x.id))))}
+try{localStorage.setItem('kfit_m','1')}catch(e){}save();render();return}
+for(const k in COLS)PREV[k]=new Map(LAST[k].map(x=>[String(x.id),JSON.stringify(x)]));
+DBR=db;setSt('ok');try{localStorage.setItem('kfit_m','1')}catch(e){}try{await db.doc('meta/state').set({v:4})}catch(e){}
+save();render()};
+if(!SUBD){SUBD=true;for(const k in COLS)db.collection(COLS[k]).onSnapshot(snap=>{LAST[k]=snap.docs.map(d=>JSON.parse(JSON.stringify(d.data())));seen[k]=1;if(Object.keys(seen).length==NC){if(!booted)boot();else applyRemote()}},e=>{console.error(e);if(e&&e.code=='revoked'){setSt('err')}})}}
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+
+</body></html>
