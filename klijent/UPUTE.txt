@@ -1,0 +1,39 @@
+K-FIT KLIJENTSKA APP v2 — postavljanje
+
+DATOTEKE (sve ide u mapu "klijent" u repou Kosulja/K-FIT):
+  index.html, app.js, stats.js, train.js, swap.js, onboard.js, analytics.js, habits.js, import.js, coach.js, exercises.json,
+  manifest.webmanifest, sw.js, EXERCISES-LICENSE.md
+  + supabase-klijenti.sql u korijen repoa
+  + lib/xlsx.full.min.js u postojeću mapu lib (čitač Excela za uvoz klijenata)
+
+1) Supabase → SQL Editor → zalijepi supabase-klijenti.sql → Run.
+   Ako si ga već pokretao, pokreni ga OPET (cijeli) — dodani su upitnik, mjere
+   i privatni spremnik za fotografije (kfit-photos).
+   Sigurno je pokrenuti više puta: ništa se ne briše i nitko ne postaje trener.
+   Pokreni PRIJE nego se ijedan klijent registrira.
+
+2) Supabase → Authentication:
+   - "Allow new users to sign up" = UKLJUČENO
+   - "Confirm email" = UKLJUČENO
+   URL Configuration → Redirect URLs dodaj:
+   https://kosulja.github.io/K-FIT/klijent/
+
+3) GitHub → repo K-FIT → Add file → Upload files → povuci mapu "klijent"
+   i supabase-klijenti.sql → Commit changes.
+   App: https://kosulja.github.io/K-FIT/klijent/
+   Demo bez računa: https://kosulja.github.io/K-FIT/klijent/?demo
+
+4) Prijavi se svojim K-FIT emailom → trenerski način.
+
+NOVI KLIJENT: registrira se → potvrdi email → ispuni upitnik → automatski
+se kreira u K-FIT evidenciji (usluga: Online coaching, odgovori u napomeni).
+POSTOJEĆI KLIJENT (email mu je u evidenciji): isto ispuni upitnik, a popune
+mu se samo prazna polja — tvoji podaci se ne prepisuju.
+FOTOGRAFIJE (sprijeda, straga, s boka) idu u privatni spremnik: klijent vidi
+samo svoje, ti sve. Mjere idu u upitnik i u dnevnik klijenta.
+
+Baza vježbi (876 vježbi, slike): free-exercise-db, javna domena (EXERCISES-LICENSE.md).
+Slike se učitavaju s GitHuba i spremaju na mobitel nakon prvog pregleda.
+
+UVOZ IZ EXCELA: trenerski prikaz → „Uvezi postojeće klijente iz Excela”. Predložak: K-FIT-uvoz-predlozak.xlsx.
+Ne trebaš ponovno pokretati SQL zbog uvoza.
