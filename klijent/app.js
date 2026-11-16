@@ -90,7 +90,7 @@ const API=DEMO?{
  async photoUrl(p){return(DB().files||{})[p]||''},
  async catalog(){return[{id:'on6',n:'Online coaching – 6 mj',p:700,t:0,d:180},{id:'on2',n:'Online coaching – 2 mj',p:250,t:0,d:60},{id:'in2_1',n:'Individualni 2x tjedno – 1 mj',p:320,t:8,d:30}]},
  async importAll(B){const d=DB();B.clients.forEach(c=>{const i=d.clients.findIndex(x=>x.id==c.id);if(i>=0)d.clients[i]=c;else d.clients.push(c)});d.packs=[...(d.packs||[]),...B.packs];d.pays=[...(d.pays||[]),...B.pays];
-  B.progs.forEach(p=>{d.prog[p.c]=mergeProg(d.prog[p.c],p.p)});B.weights.forEach(w=>{d.logs[w.c]=(d.logs[w.c]||[]).filter(x=>x.id!=w.r.id).concat([w.r])});save(d)}
+  B.progs.forEach(p=>{d.prog[p.c]=mergeProg(d.prog[p.c],p.p,p.mode)});B.weights.forEach(w=>{d.logs[w.c]=(d.logs[w.c]||[]).filter(x=>x.id!=w.r.id).concat([w.r])});save(d)}
 }:{
  async claim(){const{data,error}=await SB.rpc('kfit_claim');if(error)throw error;return data},
  async onboard(q){const{data,error}=await SB.rpc('kfit_onboard',{q});if(error)throw error;return data},
@@ -110,11 +110,11 @@ const API=DEMO?{
  async importAll(B){const now=new Date().toISOString(),rows=[...B.clients.map(d=>({col:'clients',id:d.id,data:d,updated_at:now})),...B.packs.map(d=>({col:'packs',id:d.id,data:d,updated_at:now})),...B.pays.map(d=>({col:'pays',id:d.id,data:d,updated_at:now}))];
   for(let i=0;i<rows.length;i+=200){const{error}=await SB.from('kdocs').upsert(rows.slice(i,i+200));if(error)throw error}
   if(B.log.length){const mon=today().slice(0,7),{data}=await SB.from('kdocs').select('data').eq('col','log').eq('id',mon).maybeSingle(),d=data&&data.data?data.data:{id:mon,e:[]};d.e=[...(d.e||[]),...B.log];const{error}=await SB.from('kdocs').upsert({col:'log',id:mon,data:d,updated_at:now});if(error)throw error}
-  for(const p of B.progs){const old=await API.program(p.c);const{error}=await SB.from('kfit_programs').upsert({client_id:p.c,data:mergeProg(old,p.p),updated_at:now});if(error)throw error}
+  for(const p of B.progs){const old=await API.program(p.c);const{error}=await SB.from('kfit_programs').upsert({client_id:p.c,data:mergeProg(old,p.p,p.mode),updated_at:now});if(error)throw error}
   for(const w of B.weights){const{error}=await SB.from('kfit_logs').upsert({client_id:w.c,id:w.r.id,kind:w.r.kind,day:w.r.day,data:w.r.data,updated_at:now});if(error)throw error}}
 };
 /* postojeći program se ne briše: dodaju se samo dani kojih još nema (po nazivu) */
-function mergeProg(old,neu){if(!old||!(old.days||[]).length)return neu;const have=new Set(old.days.map(d=>String(d.name).trim().toLowerCase()));return{...old,days:[...old.days,...neu.days.filter(d=>!have.has(String(d.name).trim().toLowerCase()))],updated:neu.updated}}
+function mergeProg(old,neu,mode){if(!old||!(old.days||[]).length||mode=='replace')return neu;const have=new Set(old.days.map(d=>String(d.name).trim().toLowerCase()));return{...old,days:[...old.days,...neu.days.filter(d=>!have.has(String(d.name).trim().toLowerCase()))],updated:neu.updated}}
 let MEMDB=null;const DB=()=>{let d=LS.get('kfitk-demo6',null)||MEMDB;if(!d){d=demoSeed();LS.set('kfitk-demo6',d)}MEMDB=d;return d};
 const save=d=>{MEMDB=d;LS.set('kfitk-demo6',d)};
 
@@ -210,8 +210,9 @@ function homeView(){const c=(ME&&ME.client)||{},h=new Date().getHours(),hi=h<11?
  else tw=`<div class="kick">Program</div><h2 style="margin-top:4px">Uskoro stiže</h2><p class="s mute">Trener ti priprema program. Do tada možeš pratiti vodu, korake i težinu.</p>`;
  return `<div class="stack">
 <div><div class="kick">${WD[wdi(today())]} · ${fmt(today())}</div><h1 style="margin-top:4px">${hi}${c.f?', '+esc(c.f):''}</h1></div>
-${PROG.msg?`<div class="card hero"><div class="row" style="align-items:flex-start">${I('msg')}<div><div class="kick" style="color:var(--acc)">Poruka trenera</div><p style="margin-top:4px">${esc(PROG.msg)}</p></div></div></div>`:''}
+${PROG.msg?`<div class="card hero"><div class="row" style="align-items:flex-start">${I('msg')}<div><div class="kick" style="color:var(--acc)">Poruka trenera</div><p style="margin-top:4px;white-space:pre-line">${esc(PROG.msg)}</p></div></div></div>`:''}
 <div class="card ${T.day&&!T.done?'hero':''}">${tw}</div>
+${foodCard()}
 ${waterCard()}
 ${slipsCard()}
 <div class="grid2">${statCard('steps','Koraci danas',dayVal('steps',today(),'n'),PROG.steps?'cilj '+PROG.steps.toLocaleString('hr-HR'):'','logSteps()')}${statCard('scale','Težina',lastW()?n1(lastW().data.kg)+' kg':null,goalLine(),'logWeight()')}</div>

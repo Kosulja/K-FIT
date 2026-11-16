@@ -91,6 +91,7 @@ ${tile('Treninzi',cur.n,dl(cur.n,prev.n,v=>v))}${tile('Volumen',kK(cur.vol),dl(c
 ${barSVG(weeks,{aria:'Tjedni pregled',fmt:PV.vm=='vol'?kK:PV.vm=='n'?v=>v+' treninga':v=>v+' min',short:PV.vm=='vol'?v=>v>=1000?Math.round(v/1000)+'t':v:v=>v,empty:'Nakon prvih treninga ovdje vidiš tjedni ritam.'})}<p class="xs mute">Dodirni stupac za detalje.</p></div>
 <div class="card"><div class="between" style="margin-bottom:10px"><h3>${['Siječanj','Veljača','Ožujak','Travanj','Svibanj','Lipanj','Srpanj','Kolovoz','Rujan','Listopad','Studeni','Prosinac'][pd(t).getMonth()]} do sada</h3>${I('cal','sm')}</div><div class="grid2">
 ${tile('Treninzi',W.length,'<span class="xs mute">'+W.reduce((a,r)=>a+(+r.data.dur||0),0)+' min</span>')}${tile('Volumen',kK(W.reduce((a,r)=>a+vol(r),0)),'<span class="xs mute">ukupno podignuto</span>')}${tile('Rekordi',W.reduce((a,r)=>a+(r.data.prs||[]).length,0),'<span class="xs mute">osobnih rekorda</span>')}${tile('Težina',wch==null?'—':(wch>0?'+':'')+n1(wch)+' kg','<span class="xs mute">promjena u mjesecu</span>')}</div></div>
+${foodSection(L,prog,coach)}
 ${slipsSection(L,coach)}
 <div class="card"><h3 style="margin-bottom:10px">Aktivnost u godini</h3>${heatmap(L)}</div>
 <div class="card"><div class="between" style="margin-bottom:10px"><h3>Voda — 7 dana</h3><span class="xs mute">cilj ${((prog.water||3000)/1000).toLocaleString('hr-HR')} L</span></div>${bars7('water','ml',prog.water||3000,'var(--water)',L)}</div>

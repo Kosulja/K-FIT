@@ -35,5 +35,12 @@ samo svoje, ti sve. Mjere idu u upitnik i u dnevnik klijenta.
 Baza vježbi (876 vježbi, slike): free-exercise-db, javna domena (EXERCISES-LICENSE.md).
 Slike se učitavaju s GitHuba i spremaju na mobitel nakon prvog pregleda.
 
-UVOZ IZ EXCELA: trenerski prikaz → „Uvezi postojeće klijente iz Excela”. Predložak: K-FIT-uvoz-predlozak.xlsx.
-Ne trebaš ponovno pokretati SQL zbog uvoza.
+UVOZ IZ EXCELA: trenerski prikaz → „Uvezi postojeće klijente iz Excela”.
+  • Tvoje Excelice (format „Klijent: Ime Prezime (31 god) 84kg | Fokus: …” + „DAN 1: …” blokovi)
+    učitaš direktno — možeš označiti više datoteka odjednom (jedna Excelica = jedan klijent).
+    App sama izvuče: vježbe, serije, ponavljanja, odmor, zadnju kilažu iz tjedana 1–4, napomene,
+    supersete, zagrijavanje, dane u tjednu, kalorije i makroe (dan treninga / dan odmora), korake i vodu.
+  • Novi blok za istog klijenta: samo ponovno učitaj njegovu novu Excelicu → „Zamijeni ga ovim”.
+  • Klijent se poveže kad se registrira istim emailom — upiši mu email u K-FIT evidenciji.
+  • Može i tablica po predlošku (K-FIT-uvoz-predlozak.xlsx).
+Ne trebaš ponovno pokretati SQL zbog uvoza ni prehrane.
