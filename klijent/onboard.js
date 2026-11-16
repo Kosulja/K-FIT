@@ -13,6 +13,7 @@ const QF=[
 const PH=[['front','Sprijeda'],['back','Straga'],['side','S boka']];
 const MEAS=[['waist','struk'],['belly','trbuh'],['hips','bokovi'],['thigh','bedro'],['arm','ruka']];
 const QL=Object.fromEntries(QF.flatMap(s=>s[1]).map(f=>[f[0],f[1]]));
+const isMinor=bd=>{const a=ageOf(bd);return a!==''&&a<16};
 const ageOf=bd=>{if(!bd)return'';const b=pd(bd),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n.getMonth()<b.getMonth()||(n.getMonth()==b.getMonth()&&n.getDate()<b.getDate()))a--;return a>0&&a<110?a:''};
 function qNote(q){const L=[`UPITNIK — prva prijava u aplikaciju (${fmt(today())}.)`,
  q.loc&&'Lokacija: '+q.loc,[q.age&&'Dob: '+q.age,q.h&&'Visina: '+q.h+' cm',q.kg&&'Težina: '+q.kg+' kg'].filter(Boolean).join(' · '),
@@ -35,16 +36,17 @@ function onboardView(o={}){const dr=LS.get('kfitk-q',{}),v={...(o.pre||{}),...dr
 <p class="mute" style="margin-top:8px">Ovo je jednokratni upitnik. Treba ti oko 3 minute. Na temelju odgovora trener ti slaže program — što iskrenije, to bolje.</p></div>
 ${QF.map(([t,fs,intro],i)=>`<div class="card stack"><div class="between"><h3>${t}</h3><span class="xs mute">${i+1}/${QF.length+1}</span></div>${intro?`<p class="xs mute">${intro}</p>`:''}${pair(fs)}</div>`).join('')}
 <div class="card stack" id="qph"><div class="between"><h3>Fotografije <span style="color:var(--acc)">*</span></h3><span class="xs mute">${QF.length+1}/${QF.length+1}</span></div>${PH_HINT}<div id="phs">${photoTiles(PHS)}</div></div>
-<label class="card row s" style="align-items:flex-start;gap:12px"><input type="checkbox" name="ok" ${v.ok=='da'?'checked':''} style="width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--acc)"><span>Pristajem da trener koristi ove podatke, uključujući one o zdravlju, isključivo za izradu i praćenje mog programa. <span style="color:var(--acc)">*</span></span></label>
+<label class="card row s" style="align-items:flex-start;gap:12px"><input type="checkbox" name="ok" ${v.ok=='da'?'checked':''} style="width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--acc)"><span>Pristajem da trener koristi ove podatke, uključujući one o zdravlju i fotografije, isključivo za izradu i praćenje mog programa. Pročitao/la sam <a href="privatnost.html" target="_blank" style="color:var(--acc)">politiku privatnosti i uvjete</a>. <span style="color:var(--acc)">*</span></span></label>
+<label class="f" id="qpar" ${isMinor(v.bd)?'':'hidden'}>Mlađi si od 16 — privolu daje roditelj ili skrbnik. Ime i prezime roditelja/skrbnika:<input class="inp" name="parent" value="${esc(v.parent||'')}" placeholder="Roditelj potvrđuje da je pročitao i da je suglasan"></label>
 <div id="qerr" class="s" style="color:var(--bad)"></div>
 <button class="btn acc full" id="qsend">${I('check')} Pošalji i uđi u aplikaciju</button>
 <button type="button" class="btn ghost sm" onclick="${o.demo?'qDemoExit()':'logout()'}">${o.demo?I('back','sm')+' Natrag u demo':I('out','sm')+' Odjava'}</button></form>`);
  bindTiles($('#phs'),PHS);
  const f=$('#qf'),pick={};QF.flatMap(s=>s[1]).filter(x=>x[2]=='scale'||x[2]=='pick').forEach(x=>{if(v[x[0]]!=null)pick[x[0]]=String(v[x[0]])});
- const collect=()=>{const q={};QF.flatMap(s=>s[1]).forEach(([k,,t])=>{if(t=='scale'||t=='pick')q[k]=pick[k]||'';else if(f[k])q[k]=f[k].value.trim()});q.age=String(ageOf(q.bd)||'');['h','kg','meals','kcal','sleep','steps'].forEach(k=>{if(q[k])q[k]=q[k].replace(',','.')});q.ok=f.ok.checked?'da':'';return q};
+ const collect=()=>{const q={};QF.flatMap(s=>s[1]).forEach(([k,,t])=>{if(t=='scale'||t=='pick')q[k]=pick[k]||'';else if(f[k])q[k]=f[k].value.trim()});q.age=String(ageOf(q.bd)||'');if(f.parent)q.parent=f.parent.value.trim();['h','kg','meals','kcal','sleep','steps'].forEach(k=>{if(q[k])q[k]=q[k].replace(',','.')});q.ok=f.ok.checked?'da':'';return q};
  const keep=()=>{const q=collect();delete q.em;LS.set('kfitk-q',q)};
  f.querySelectorAll('[data-k]').forEach(g=>g.onclick=e=>{const b=e.target.closest('[data-n]');if(!b)return;g.querySelectorAll('[data-n]').forEach(x=>x.classList.toggle('on',x==b));pick[g.dataset.k]=b.dataset.n;keep()});
- f.oninput=()=>{const a=$('#qage');if(a)a.value=ageOf(f.bd.value);keep()};
+ f.oninput=()=>{const a=$('#qage');if(a)a.value=ageOf(f.bd.value);const p=$('#qpar');if(p)p.hidden=!isMinor(f.bd.value);keep()};
  f.onsubmit=async e=>{e.preventDefault();const q=collect(),err=$('#qerr');
   const miss=QF.flatMap(s=>s[1]).filter(([k,,t,req])=>req&&t!='age'&&!q[k]).map(x=>x[1].replace(/\?$/,''));
   const bad=[['h',100,250,'visina'],['kg',30,300,'težina'],['sleep',2,14,'san'],['meals',1,12,'broj obroka']].filter(([k,a,b])=>q[k]&&!(num(q[k])>=a&&num(q[k])<=b)).map(x=>x[3]);
@@ -53,8 +55,9 @@ ${QF.map(([t,fs,intro],i)=>`<div class="card stack"><div class="between"><h3>${t
   if(bad.length){err.textContent='Provjeri: '+bad.join(', ')+' (broj izgleda neobično).';return}
   const mp=PH.filter(([k])=>!PHS[k]).map(x=>x[1].toLowerCase());if(mp.length){err.textContent='Dodaj fotografije: '+mp.join(', ')+'.';$('#qph').style.outline='2px solid var(--bad)';$('#qph').scrollIntoView({block:'center',behavior:'smooth'});return}
   if(q.ok!='da'){err.textContent='Za nastavak označi privolu na dnu.';return}
+  if(isMinor(q.bd)&&!(q.parent||'').trim()){const p=$('#qpar');p.hidden=false;err.textContent='Mlađi si od 16 — upiši ime roditelja ili skrbnika koji daje privolu.';p.scrollIntoView({block:'center',behavior:'smooth'});return}
   const b=$('#qsend');b.disabled=true;err.textContent='';
-  let r;try{r=await API.onboard({...q,txt:qNote(q)})}
+  let r;try{r=await API.onboard({...q,txt:qNote(q)+(q.parent?'\nPrivola roditelja/skrbnika: '+q.parent.trim()+' ('+fmt(today())+')':'')})}
   catch(x){console.error(x);err.textContent='Slanje nije uspjelo: '+(x.message||'provjeri internet')+'. Odgovori su sačuvani, pokušaj ponovno.';b.disabled=false;return}
   LS.del('kfitk-q');VIEW='home';CID=r.client_id;let okp=true;
   try{b.innerHTML='Šaljem fotografije…';await sendPhotos(PHS,'start')}catch(x){console.error(x);okp=false}

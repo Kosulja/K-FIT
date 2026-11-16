@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="hr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Instaliraj K-FIT</title><meta name="theme-color" content="#0e0f11">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="../icons/icon-192.png"><link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta property="og:title" content="K-FIT — tvoj program na mobitelu"><meta property="og:description" content="Treninzi, prehrana i napredak. Instaliraj u 3 koraka."><meta property="og:image" content="https://kosulja.github.io/K-FIT/icons/icon-512.png">
+<style>
+:root{--bg:#0e0f11;--card:#17181b;--soft:#202125;--ink:#ecece9;--mute:#9a9ca3;--line:#27282d;--acc:#e0975c;--acc-ink:#15100a}
+@media(prefers-color-scheme:light){:root{--bg:#f4f3f0;--card:#fff;--soft:#ecebe7;--ink:#1b1c1f;--mute:#62646b;--line:#e3e1dc;--acc:#b4622a;--acc-ink:#fff}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:520px;margin:0 auto;padding:32px 16px calc(40px + env(safe-area-inset-bottom))}
+.logo{display:flex;align-items:center;gap:14px}.logo img{width:64px;height:64px;border-radius:16px}
+h1{font-size:30px;line-height:1.1;margin:0}.mute{color:var(--mute)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--soft);padding:4px;border-radius:14px;margin:24px 0 16px}
+.tabs button{border:0;background:none;color:var(--mute);font:600 15px system-ui;padding:10px;border-radius:10px;cursor:pointer}
+.tabs button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0/.25)}
+ol{list-style:none;padding:0;margin:0;display:grid;gap:10px;counter-reset:s}
+ol li{counter-increment:s;display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px}
+ol li::before{content:counter(s);flex:none;width:30px;height:30px;border-radius:50%;background:var(--acc);color:var(--acc-ink);font-weight:700;display:grid;place-items:center}
+.k{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:8px;background:var(--soft);font-weight:600;white-space:nowrap}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;border:0;border-radius:16px;background:var(--acc);color:var(--acc-ink);font:700 16px system-ui;text-decoration:none;margin-top:16px;cursor:pointer}
+.btn.ghost{background:var(--soft);color:var(--ink)}
+.note{font-size:14px;margin-top:20px}[hidden]{display:none!important}
+svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+</style></head><body><main>
+<div class="logo"><img src="../icons/icon-192.png" alt=""><div><h1>K-FIT</h1><div class="mute">Tvoj program, treninzi i napredak</div></div></div>
+<p style="margin-top:20px">Aplikacija se instalira ravno iz preglednika — bez trgovine, besplatno i sigurno. Dobiješ ikonu na početnom zaslonu i app preko cijelog ekrana, a nove verzije stižu same.</p>
+<div class="tabs" role="tablist"><button id="t-ios" role="tab">iPhone</button><button id="t-and" role="tab">Android</button></div>
+<section id="ios"><ol>
+<li><span>Otvori ovu stranicu u <b>Safariju</b> (ne u Instagramu ili WhatsAppu — ondje stisni ⋯ → „Otvori u Safariju”).</span></li>
+<li><span>Dolje stisni tipku <span class="k"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v7h14v-7"/></svg> Dijeli</span>.</span></li>
+<li><span>Pomakni prema dolje i odaberi <span class="k">Dodaj na početni zaslon</span>, pa <b>Dodaj</b>.</span></li>
+<li><span>Otvori <b>K-FIT</b> s početnog zaslona i prijavi se.</span></li>
+</ol></section>
+<section id="and" hidden><button class="btn" id="inst" hidden><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg> Instaliraj K-FIT</button>
+<ol style="margin-top:16px">
+<li><span>Otvori ovu stranicu u <b>Chromeu</b> (iz Instagrama/WhatsAppa: ⋮ → „Otvori u Chromeu”).</span></li>
+<li><span>Stisni gumb <b>Instaliraj K-FIT</b> iznad — ili izbornik <span class="k">⋮</span> → <span class="k">Instaliraj aplikaciju</span>.</span></li>
+<li><span>Potvrdi s <b>Instaliraj</b>. Ikona se pojavi među aplikacijama.</span></li>
+<li><span>Otvori <b>K-FIT</b> i prijavi se.</span></li>
+</ol></section>
+<a class="btn ghost" href="./">Otvori K-FIT u pregledniku</a>
+<p class="note mute">Prvi put? Stisni „Napravi račun” i upiši email koji si dao/la treneru — program te već čeka. · <a href="privatnost.html" style="color:inherit">Privatnost i uvjeti</a></p>
+</main>
+<script>
+const ua=navigator.userAgent,isIOS=/iphone|ipad|ipod/i.test(ua)||(navigator.platform=='MacIntel'&&navigator.maxTouchPoints>1);
+function show(w){document.getElementById('ios').hidden=w!='ios';document.getElementById('and').hidden=w!='and';document.getElementById('t-ios').classList.toggle('on',w=='ios');document.getElementById('t-and').classList.toggle('on',w=='and')}
+document.getElementById('t-ios').onclick=()=>show('ios');document.getElementById('t-and').onclick=()=>show('and');show(isIOS?'ios':'and');
+let P=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();P=e;document.getElementById('inst').hidden=false});
+document.getElementById('inst').onclick=async()=>{if(!P)return;P.prompt();await P.userChoice;P=null;document.getElementById('inst').hidden=true};
+if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)location.replace('./');
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
