@@ -84,6 +84,8 @@ const API=DEMO?{
  async put(c,r){const d=DB();d.logs[c]=(d.logs[c]||[]).filter(x=>x.id!=r.id);d.logs[c].push(clone(r));save(d)},
  async del(c,id){const d=DB();d.logs[c]=(d.logs[c]||[]).filter(x=>x.id!=id);save(d)},
  async clients(){return DB().clients},async links(){return DB().links},
+ async accCreate(cid,u,pw){const d=DB();if(d.links.some(l=>l.client_id==cid))throw new Error('Klijent već ima pristup.');d.links.push({client_id:cid,email:u+UDOM,created_at:new Date().toISOString()});save(d);return{username:u}},
+ async accReset(cid,pw){return{}},async accRemove(cid){const d=DB();d.links=d.links.filter(l=>l.client_id!=cid);save(d);return{ok:true}},
  async activity(from){const d=DB(),o={};Object.entries(d.logs).forEach(([c,L])=>L.filter(r=>r.day>=from).forEach(r=>(o[c]=o[c]||[]).push(r)));return o},
  async unlink(c){const d=DB();d.links=d.links.filter(l=>l.client_id!=c);save(d)},
  async uploadPhoto(c,name,blob){const small=await shrink(blob,520,.72),url=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(small)}),d=DB(),p=c+'/'+name;d.files=d.files||{};d.files[p]=url;save(d);return p},
@@ -102,6 +104,9 @@ const API=DEMO?{
  async del(c,id){const{error}=await SB.from('kfit_logs').delete().eq('client_id',c).eq('id',id);if(error)throw error},
  async clients(){const{data,error}=await SB.from('kdocs').select('id,data').eq('col','clients');if(error)throw error;return data.filter(r=>!r.data.ar).map(r=>({id:r.id,...r.data}))},
  async links(){const{data,error}=await SB.from('kfit_links').select('client_id,email,created_at');if(error)throw error;return data},
+ async accCreate(cid,uname,pw){const{data,error}=await SB.rpc('kfit_acc_create',{cid,uname,pw});if(error)throw error;return data},
+ async accReset(cid,pw){const{data,error}=await SB.rpc('kfit_acc_reset',{cid,pw});if(error)throw error;return data},
+ async accRemove(cid){const{data,error}=await SB.rpc('kfit_acc_remove',{cid});if(error)throw error;return data},
  async activity(from){const{data,error}=await SB.from('kfit_logs').select('client_id,id,kind,day,data').gte('day',from).limit(5000);if(error)throw error;const o={};data.forEach(r=>(o[r.client_id]=o[r.client_id]||[]).push(r));return o},
  async unlink(c){const{error}=await SB.from('kfit_links').delete().eq('client_id',c);if(error)throw error},
  async uploadPhoto(c,name,blob){const p=c+'/'+name,{error}=await SB.storage.from('kfit-photos').upload(p,blob,{contentType:'image/jpeg',upsert:false});if(error)throw error;return p},
@@ -154,23 +159,31 @@ async function enter(){
 }
 function infoView(t,m){shell(`<div class="center card stack">${I('user')}<h1>${t}</h1><p class="mute">${m}</p><a class="btn ghost" href="${CFG.ig}" target="_blank" rel="noopener">${I('msg')} Javi se na Instagramu</a><button class="btn" onclick="enter()">Pokušaj ponovno</button><button class="btn ghost" onclick="logout()">${I('out')} Odjava</button></div>`)}
 let AUTHMODE='in';
+/* korisničko ime → interni email (trener otvara račun bez emaila) */
+const UDOM='@k-fit.local';
+const normUser=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().replace(/\s+/g,'.').replace(/[^a-z0-9._-]/g,'').replace(/^[._-]+/,'').slice(0,30);
+const toLogin=s=>{s=String(s||'').trim();return s.includes('@')?s.toLowerCase():normUser(s)+UDOM};
+const dispLogin=e=>String(e||'').endsWith(UDOM)?String(e).slice(0,-UDOM.length):String(e||'');
+function pwChangeM(){const o=sheet(`<form class="stack" id="pcf">${sheetHd('Promijeni lozinku')}<label class="f">Nova lozinka<input class="inp" id="pc1" type="password" minlength="8" autocomplete="new-password" required></label><label class="f">Ponovi lozinku<input class="inp" id="pc2" type="password" minlength="8" autocomplete="new-password" required></label><div id="pce" class="s" style="color:var(--bad)"></div><button class="btn acc">Spremi</button></form>`);
+ o.querySelector('#pcf').onsubmit=async e=>{e.preventDefault();const a=o.querySelector('#pc1').value,b=o.querySelector('#pc2').value,er=o.querySelector('#pce');if(a!=b){er.textContent='Lozinke se ne podudaraju.';return}
+  if(DEMO){close(o);toast('U demu se lozinka ne mijenja.');return}const{error}=await SB.auth.updateUser({password:a});if(error){er.textContent=error.message;return}close(o);toast('Lozinka promijenjena.')}}
 function loginView(msg){ROLE=null;const m={in:T('Prijavi se','Sign in'),up:T('Napravi račun','Create account'),re:T('Pošalji link','Send link')}[AUTHMODE];
 app.innerHTML=`<div style="padding:16px"><form id="lg" class="center card stack" autocomplete="on">
 <div class="between"><div class="brand" style="font-size:30px">K<b>-</b>FIT</div>${langSeg()}</div><p class="mute s">${T('Tvoj program, treninzi i napredak — na jednom mjestu.','Your program, workouts and progress — all in one place.')}</p><p class="xs mute" style="margin-top:-6px">${T('Jezik naziva vježbi možeš promijeniti i kasnije u postavkama.','You can change the exercise name language later in settings.')}</p>
 <div class="seg"><button type="button" class="${AUTHMODE=='in'?'on':''}" onclick="AUTHMODE='in';loginView()">${T('Prijava','Sign in')}</button><button type="button" class="${AUTHMODE=='up'?'on':''}" onclick="AUTHMODE='up';loginView()">${T('Registracija','Sign up')}</button></div>
 ${AUTHMODE=='up'?`<p class="xs mute">${T('Već treniraš s trenerom? Koristi <b>isti email</b> koji si mu dao. Novi si? Nakon potvrde emaila ispunjavaš kratki upitnik i tvoj profil se kreira sam.','Already training with the coach? Use the <b>same email</b> you gave him. New here? After confirming your email you fill in a short questionnaire and your profile is created automatically.')}</p>`:''}
-<label class="f">Email<input class="inp" id="lem" type="email" autocomplete="username" required></label>
+<label class="f">${AUTHMODE=='in'?T('Korisničko ime ili email','Username or email'):'Email'}<input class="inp" id="lem" type="${AUTHMODE=='in'?'text':'email'}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" required></label>
 ${AUTHMODE!='re'?`<label class="f">${T('Lozinka','Password')}<input class="inp" id="lpw" type="password" minlength="8" autocomplete="${AUTHMODE=='up'?'new-password':'current-password'}" required></label>`:''}
 <div id="lerr" class="s" style="color:var(--bad)">${esc(msg||'')}</div>
 <button class="btn acc" type="submit">${m}</button>
 ${AUTHMODE=='in'?`<button type="button" class="xs mute" onclick="AUTHMODE='re';loginView()">${T('Zaboravljena lozinka?','Forgot password?')}</button>`:AUTHMODE=='re'?`<button type="button" class="xs mute" onclick="AUTHMODE='in';loginView()">${T('Natrag na prijavu','Back to sign in')}</button>`:''}
 <hr style="border:0;border-top:1px solid var(--line);width:100%;margin:4px 0"><button type="button" class="btn ghost sm" onclick="LS.set('kfitk-demo-on',true);location.reload()">${I('play','sm')} ${T('Pogledaj demo','View demo')}</button></form></div>`;
-$('#lg').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button[type=submit]'),em=$('#lem').value.trim(),pw=$('#lpw')&&$('#lpw').value,err=$('#lerr');
+$('#lg').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button[type=submit]'),em=toLogin($('#lem').value),pw=$('#lpw')&&$('#lpw').value,err=$('#lerr');
  if(!SB){err.textContent='Nema veze s bazom.';return}b.disabled=true;err.textContent='';
  try{if(AUTHMODE=='in'){const{error}=await SB.auth.signInWithPassword({email:em,password:pw});if(error)throw error;enter()}
  else if(AUTHMODE=='up'){const{data,error}=await SB.auth.signUp({email:em,password:pw,options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;if(data.session)enter();else infoView(T('Provjeri email','Check your email'),T('Poslali smo link za potvrdu na <b>','We sent a confirmation link to <b>')+esc(em)+T('</b>. Nakon potvrde se prijavi ovdje.','</b>. After confirming, sign in here.'))}
- else{const{error}=await SB.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});if(error)throw error;err.style.color='var(--ok)';err.textContent=T('Link za novu lozinku je poslan na email.','A password reset link has been sent to your email.')}}
- catch(x){err.textContent=/Invalid login/i.test(x.message)?T('Pogrešan email ili lozinka.','Wrong email or password.'):/registered/i.test(x.message)?T('Taj email već ima račun — prijavi se.','That email already has an account — sign in.'):x.message}b.disabled=false}}
+ else{if(em.endsWith(UDOM))throw new Error(T('Za korisničko ime novu lozinku ti daje trener — javi mu se.','For a username login, your coach sets a new password — contact him.'));const{error}=await SB.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});if(error)throw error;err.style.color='var(--ok)';err.textContent=T('Link za novu lozinku je poslan na email.','A password reset link has been sent to your email.')}}
+ catch(x){err.textContent=/Invalid login/i.test(x.message)?T('Pogrešno korisničko ime/email ili lozinka.','Wrong username/email or password.'):/registered/i.test(x.message)?T('Taj email već ima račun — prijavi se.','That email already has an account — sign in.'):x.message}b.disabled=false}}
 function newPwView(){app.innerHTML=`<div style="padding:16px"><form id="np" class="center card stack"><h1>Nova lozinka</h1><label class="f">Nova lozinka<input class="inp" id="npw" type="password" minlength="8" autocomplete="new-password" required></label><div id="nerr" class="s" style="color:var(--bad)"></div><button class="btn acc">Spremi</button></form></div>`;
 $('#np').onsubmit=async e=>{e.preventDefault();const{error}=await SB.auth.updateUser({password:$('#npw').value});if(error){$('#nerr').textContent=error.message;return}history.replaceState(null,'',location.pathname);toast('Lozinka promijenjena.');enter()}}
 async function logout(){if(DEMO)return exitDemo();await SB.auth.signOut();AUTHMODE='in';loginView()}
@@ -277,7 +290,7 @@ ${row('body','Figura na mapi mišića','',`<div class="seg" style="width:120px">
 <div><div class="row" style="margin-bottom:10px">${I('sun')}<div class="b s">Tema</div></div><div class="seg">${[['auto','Auto'],['dark','Tamna'],['light','Svijetla']].map(([v,l])=>`<button class="${s.theme==v?'on':''}" onclick="saveSet({theme:'${v}'}).then(()=>keepScroll(render))">${l}</button>`).join('')}</div>
 <div class="accs" style="margin-top:12px">${Object.keys(ACC).map(k=>`<button class="${s.acc==k?'on':''}" style="background:${ACC[k][0]}" title="${ACCN[k]}" aria-label="${ACCN[k]}" onclick="saveSet({acc:'${k}'}).then(()=>keepScroll(render))"></button>`).join('')}</div></div>
 </div></div>
-<div class="card stack"><a class="btn ghost" href="${CFG.ig}" target="_blank" rel="noopener">${I('msg')} Poruka treneru</a><button class="btn ghost" onclick="exportData()">${I('file')} Izvezi moje podatke (JSON)</button><button class="btn ghost" onclick="installHelp()">${I('down')} Dodaj na početni zaslon</button><a class="btn ghost" href="privatnost.html" target="_blank">${I('file')} Privatnost i uvjeti</a><button class="btn ghost" onclick="logout()">${I('out')} Odjava</button></div></div>`}
+<div class="card stack"><a class="btn ghost" href="${CFG.ig}" target="_blank" rel="noopener">${I('msg')} Poruka treneru</a><button class="btn ghost" onclick="exportData()">${I('file')} Izvezi moje podatke (JSON)</button><button class="btn ghost" onclick="installHelp()">${I('down')} Dodaj na početni zaslon</button><a class="btn ghost" href="privatnost.html" target="_blank">${I('file')} Privatnost i uvjeti</a><button class="btn ghost" onclick="pwChangeM()">${I('edit')} Promijeni lozinku</button><button class="btn ghost" onclick="logout()">${I('out')} Odjava</button></div></div>`}
 async function toggleNotif(){const s=setts();if(!s.notif&&'Notification' in window&&Notification.permission!='granted'){const p=await Notification.requestPermission();if(p!='granted')toast('Obavijesti nisu dopuštene — ostaju zvuk i vibracija.')}await saveSet({notif:!s.notif});keepScroll(render)}
 function download(name,text,type='application/json'){const u=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
 function exportData(){download('kfit-moji-podaci-'+today()+'.json',JSON.stringify({izvoz:new Date().toISOString(),program:PROG,unosi:LOGS},null,1));toast('Datoteka preuzeta.')}

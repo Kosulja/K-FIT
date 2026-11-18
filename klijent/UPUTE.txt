@@ -44,3 +44,12 @@ UVOZ IZ EXCELA: trenerski prikaz → „Uvezi postojeće klijente iz Excela”.
   • Klijent se poveže kad se registrira istim emailom — upiši mu email u K-FIT evidenciji.
   • Može i tablica po predlošku (K-FIT-uvoz-predlozak.xlsx).
 Ne trebaš ponovno pokretati SQL zbog uvoza ni prehrane.
+
+PRISTUP KORISNIČKIM IMENOM (od 18. 11.):
+  1) Supabase → SQL Editor → pokreni CIJELI supabase-klijenti.sql još jednom (dodan je dio 12).
+  2) Trener → klijent → „Napravi pristup”: upišeš korisničko ime, lozinka se predloži sama.
+     Poruku s pristupom pošalješ klijentu na WhatsApp ili je kopiraš.
+  3) Klijent zaboravio lozinku → „Nova lozinka” (stara prestaje vrijediti, odjavi ga sa svih uređaja).
+  4) „×” ukida pristup — program i povijest klijenta ostaju.
+  Klijent se prijavljuje korisničkim imenom (ili emailom ako se sam registrirao) i
+  lozinku može promijeniti sam: Ja → Promijeni lozinku.

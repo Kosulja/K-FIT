@@ -22,7 +22,8 @@ async function openClient(id){COACH.sel=id;COACH.tab=COACH.tab||'prog';COACH.pro
  try{const[p,l]=await Promise.all([API.program(id),API.logs(id,addD(today(),-400))]);COACH.prog=p||EMPTY_PROG();COACH.logs=l}catch(e){toast('Greška učitavanja.');COACH.prog=EMPTY_PROG()}EDIRTY=false;coachClient();scrollTo(0,0)}
 let EDIRTY=false;
 function coachClient(){const c=COACH.list.find(x=>x.id==COACH.sel)||{f:'?',l:''},lk=COACH.links[c.id],lv=isLive(COACH.logs);
- shell(`<div class="stack"><div class="row"><button class="btn sm icon ghost" onclick="backCoach()" aria-label="Natrag">${I('back','sm')}</button><div style="flex:1;min-width:0"><h2 class="ell">${esc(c.f+' '+(c.l||''))}</h2><p class="xs mute ell">${lv?`<b style="color:var(--ok)">● trenira sada: ${esc(lv.data.name)}</b>`:lk?'Povezan · '+esc(lk.email||''):c.em?'Čeka registraciju ('+esc(c.em)+')':'Upiši email u K-FIT evidenciji da se može povezati'}</p></div></div>
+ shell(`<div class="stack"><div class="row"><button class="btn sm icon ghost" onclick="backCoach()" aria-label="Natrag">${I('back','sm')}</button><div style="flex:1;min-width:0"><h2 class="ell">${esc(c.f+' '+(c.l||''))}</h2><p class="xs mute ell">${lv?`<b style="color:var(--ok)">● trenira sada: ${esc(lv.data.name)}</b>`:lk?(String(lk.email||'').endsWith(UDOM)?'Pristup: '+esc(dispLogin(lk.email)):'Povezan · '+esc(lk.email||'')):c.em?'Čeka registraciju ('+esc(c.em)+')':'Upiši email u K-FIT evidenciji da se može povezati'}</p></div></div>
+${accessCard(c,lk)}
 <div class="seg"><button class="${COACH.tab=='prog'?'on':''}" onclick="COACH.tab='prog';coachClient()">Program</button><button class="${COACH.tab=='log'?'on':''}" onclick="COACH.tab='log';coachClient()">Napredak</button><button class="${COACH.tab=='q'?'on':''}" onclick="COACH.tab='q';coachClient()">Upitnik</button></div>
 ${COACH.tab=='prog'?progEditor():COACH.tab=='q'?upitnikView(c):coachLog()}</div>`);if(COACH.tab=='prog')bindEditor()}
 async function backCoach(){if(EDIRTY&&!await ask('Imaš nespremljene promjene programa. Izaći bez spremanja?','Izađi',1))return;EDIRTY=false;COACH.sel=null;coachRender();scrollTo(0,0)}
@@ -161,3 +162,33 @@ async function boot(){
 window.addEventListener('beforeunload',e=>{if(EDIRTY){e.preventDefault();e.returnValue=''}});
 if(!PREVIEW&&'serviceWorker' in navigator&&location.protocol=='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 boot();
+
+/* ============ Pristup aplikaciji: trener otvara račun, daje novu lozinku, ukida pristup ============ */
+const PWW=['Snaga','Cucanj','Zgib','Bucica','Sipka','Plank','Potisak','Iskorak','Veslanje','Trbuh','Kardio','Forma'];
+function genPw(){const r=new Uint32Array(2);crypto.getRandomValues(r);return PWW[r[0]%PWW.length]+'-'+String(1000+r[1]%9000)}
+const INST_URL='https://kosulja.github.io/K-FIT/klijent/instaliraj.html';
+function accessCard(c,lk){if(!lk)return `<div class="card flat between" style="padding:12px 14px;gap:10px"><div style="min-width:0"><div class="b s">Nema pristup aplikaciji</div><div class="xs mute">Otvori mu korisničko ime i lozinku.</div></div><button class="btn sm acc" onclick="accNewM('${c.id}')">${I('plus','sm')} Napravi pristup</button></div>`;
+ const un=String(lk.email||'').endsWith(UDOM);
+ return `<div class="card flat between" style="padding:12px 14px;gap:10px;flex-wrap:wrap"><div style="min-width:0"><div class="xs mute">${un?'Korisničko ime':'Prijava emailom'}</div><div class="b s ell">${esc(dispLogin(lk.email))}</div></div><div class="row" style="gap:6px"><button class="btn sm ghost" onclick="accResetM('${c.id}')">${I('edit','sm')} Nova lozinka</button><button class="btn sm ghost icon" onclick="accRemoveM('${c.id}')" aria-label="Ukini pristup" title="Ukini pristup">${I('x','sm')}</button></div></div>`}
+function accNewM(cid){const c=COACH.list.find(x=>x.id==cid)||{};const o=sheet(`<form class="stack" id="anf">${sheetHd('Pristup za '+esc((c.f||'')+' '+(c.l||'')))}
+<label class="f">Korisničko ime<input class="inp" id="anu" autocapitalize="none" autocorrect="off" spellcheck="false" value="${esc(normUser((c.f||'')+'.'+(c.l||'')))}" required></label>
+<label class="f">Lozinka<span class="row" style="gap:6px"><input class="inp" id="anp" style="flex:1" value="${genPw()}" minlength="8" required><button type="button" class="btn ghost icon" id="ang" aria-label="Nova lozinka">${I('bolt')}</button></span></label>
+<p class="xs mute">Mala slova, brojke, točka ili crtica. Klijent lozinku kasnije može promijeniti sam u appu (Ja → Promijeni lozinku).</p><div id="ane" class="s" style="color:var(--bad)"></div><button class="btn acc">Napravi pristup</button></form>`);
+ const u=o.querySelector('#anu');u.oninput=()=>{const v=normUser(u.value);if(v!=u.value)u.value=v};o.querySelector('#ang').onclick=()=>o.querySelector('#anp').value=genPw();
+ o.querySelector('#anf').onsubmit=async e=>{e.preventDefault();const b=e.submitter||o.querySelector('button.acc'),un=normUser(u.value),pw=o.querySelector('#anp').value.trim(),er=o.querySelector('#ane');
+  if(un.length<3){er.textContent='Korisničko ime mora imati barem 3 znaka.';return}if(pw.length<8){er.textContent='Lozinka mora imati barem 8 znakova.';return}b.disabled=true;er.textContent='';
+  try{await API.accCreate(cid,un,pw);COACH.links[cid]={client_id:cid,email:un+UDOM};close(o);accShareM(c,un,pw,true);keepScroll(coachClient)}catch(x){er.textContent=x.message||'Nije uspjelo.';b.disabled=false}}}
+function accResetM(cid){const c=COACH.list.find(x=>x.id==cid)||{},lk=COACH.links[cid]||{};const o=sheet(`<form class="stack" id="arf">${sheetHd('Nova lozinka')}<p class="s">${esc((c.f||'')+' '+(c.l||''))} · <b>${esc(dispLogin(lk.email))}</b></p>
+<label class="f">Nova lozinka<span class="row" style="gap:6px"><input class="inp" id="arp" style="flex:1" value="${genPw()}" minlength="8" required><button type="button" class="btn ghost icon" id="arg" aria-label="Druga lozinka">${I('bolt')}</button></span></label>
+<p class="xs mute">Stara lozinka prestaje vrijediti i klijent se odjavljuje sa svih uređaja.</p><div id="are" class="s" style="color:var(--bad)"></div><button class="btn acc">Postavi lozinku</button></form>`);
+ o.querySelector('#arg').onclick=()=>o.querySelector('#arp').value=genPw();
+ o.querySelector('#arf').onsubmit=async e=>{e.preventDefault();const pw=o.querySelector('#arp').value.trim(),er=o.querySelector('#are');if(pw.length<8){er.textContent='Lozinka mora imati barem 8 znakova.';return}
+  try{await API.accReset(cid,pw);close(o);accShareM(c,dispLogin(lk.email),pw,false)}catch(x){er.textContent=x.message||'Nije uspjelo.'}}}
+async function accRemoveM(cid){const c=COACH.list.find(x=>x.id==cid)||{};if(!await ask(`Ukinuti pristup za ${(c.f||'')+' '+(c.l||'')}? Klijent se više neće moći prijaviti. Program i povijest ostaju, a pristup mu možeš ponovno otvoriti.`,'Ukini pristup',1))return;
+ try{await API.accRemove(cid);delete COACH.links[cid];toast('Pristup ukinut.');keepScroll(coachClient)}catch(x){toast(x.message||'Nije uspjelo.')}}
+function accShareM(c,un,pw,first){const msg=`Bok ${c.f||''}! ${first?'Tvoj pristup K-FIT aplikaciji':'Nova lozinka za K-FIT aplikaciju'}:\n\nKorisničko ime: ${un}\nLozinka: ${pw}\n\n${first?'Instaliraj app: '+INST_URL+'\n\n':''}Lozinku možeš promijeniti u appu: Ja → Promijeni lozinku.`;
+ const tel=String(c.tel||'').replace(/[^\d+]/g,'').replace(/^00/,'+').replace(/^0/,'+385').replace(/^\+/,'');
+ const o=sheet(`<div class="stack">${sheetHd(first?'Pristup je spreman':'Lozinka je promijenjena')}<p class="s mute">Pošalji ovo klijentu. Lozinku vidiš samo sada — ako je izgubi, napravi novu.</p>
+<div class="card flat" style="padding:14px"><div class="xs mute">Korisničko ime</div><div class="b tnum" style="font-size:18px">${esc(un)}</div><div class="xs mute" style="margin-top:8px">Lozinka</div><div class="b tnum" style="font-size:18px">${esc(pw)}</div></div>
+<div class="grid2"><button class="btn ghost" id="acc-cp">${I('copy')} Kopiraj poruku</button><a class="btn acc" target="_blank" rel="noopener" href="https://wa.me/${tel}?text=${encodeURIComponent(msg)}">${I('msg')} WhatsApp</a></div></div>`);
+ o.querySelector('#acc-cp').onclick=async()=>{try{await navigator.clipboard.writeText(msg);toast('Kopirano.')}catch(e){toast('Kopiranje nije uspjelo — prepiši ručno.')}}}

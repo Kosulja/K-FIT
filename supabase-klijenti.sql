@@ -272,3 +272,58 @@ create policy "kfit_ph_client_read" on storage.objects for select to authenticat
 drop policy if exists "kfit_ph_client_add" on storage.objects;
 create policy "kfit_ph_client_add" on storage.objects for insert to authenticated
   with check (bucket_id = 'kfit-photos' and (storage.foldername(name))[1] = public.kfit_my_client());
+
+-- 12) PRISTUP KORISNIČKIM IMENOM ---------------------------------------
+-- Trener klijentu otvara račun (korisničko ime + lozinka), daje novu lozinku
+-- kad je klijent zaboravi i može ukinuti pristup. Korisničko ime se interno
+-- sprema kao <ime>@k-fit.local (na tu adresu se nikad ništa ne šalje).
+create extension if not exists pgcrypto with schema extensions;
+
+create or replace function public.kfit_acc_create(cid text, uname text, pw text) returns json
+language plpgsql security definer set search_path = public, extensions, auth as $$
+declare u text := lower(trim(uname)); em text; uid uuid := gen_random_uuid();
+begin
+  if not public.kfit_is_coach() then raise exception 'Samo trener može otvarati pristup.'; end if;
+  if u !~ '^[a-z0-9][a-z0-9._-]{2,29}$' then raise exception 'Korisničko ime: 3–30 znakova, mala slova, brojke, točka, crtica.'; end if;
+  if length(coalesce(pw,'')) < 8 then raise exception 'Lozinka mora imati barem 8 znakova.'; end if;
+  if not exists (select 1 from public.kdocs where col='clients' and id=cid) then raise exception 'Klijent ne postoji u evidenciji.'; end if;
+  if exists (select 1 from public.kfit_links where client_id=cid) then raise exception 'Klijent već ima pristup — koristi „Nova lozinka”.'; end if;
+  em := u || '@k-fit.local';
+  if exists (select 1 from auth.users where lower(email)=em) then raise exception 'Korisničko ime je zauzeto.'; end if;
+  insert into auth.users(instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,
+      raw_app_meta_data,raw_user_meta_data,created_at,updated_at,confirmation_token,email_change,email_change_token_new,recovery_token)
+    values ('00000000-0000-0000-0000-000000000000',uid,'authenticated','authenticated',em,crypt(pw,gen_salt('bf')),now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,jsonb_build_object('username',u),now(),now(),'','','','');
+  insert into auth.identities(id,user_id,provider_id,identity_data,provider,last_sign_in_at,created_at,updated_at)
+    values (gen_random_uuid(),uid,uid::text,jsonb_build_object('sub',uid::text,'email',em,'email_verified',true),'email',now(),now(),now());
+  insert into public.kfit_links(user_id,client_id,email) values (uid,cid,em);
+  return json_build_object('username',u,'email',em);
+end $$;
+
+create or replace function public.kfit_acc_reset(cid text, pw text) returns json
+language plpgsql security definer set search_path = public, extensions, auth as $$
+declare uid uuid; em text;
+begin
+  if not public.kfit_is_coach() then raise exception 'Samo trener može mijenjati lozinke.'; end if;
+  if length(coalesce(pw,'')) < 8 then raise exception 'Lozinka mora imati barem 8 znakova.'; end if;
+  select user_id, email into uid, em from public.kfit_links where client_id=cid;
+  if uid is null then raise exception 'Klijent još nema pristup.'; end if;
+  update auth.users set encrypted_password=crypt(pw,gen_salt('bf')), email_confirmed_at=coalesce(email_confirmed_at,now()), updated_at=now() where id=uid;
+  begin delete from auth.sessions where user_id=uid; exception when others then null; end;  -- odjavi stare prijave
+  return json_build_object('email',em);
+end $$;
+
+create or replace function public.kfit_acc_remove(cid text) returns json
+language plpgsql security definer set search_path = public, auth as $$
+declare uid uuid;
+begin
+  if not public.kfit_is_coach() then raise exception 'Samo trener može ukinuti pristup.'; end if;
+  select user_id into uid from public.kfit_links where client_id=cid;
+  if uid is null then return json_build_object('ok',true); end if;
+  if exists (select 1 from public.kfit_coaches where user_id=uid) then raise exception 'To je trenerski račun.'; end if;
+  delete from auth.users where id=uid;   -- veza se briše sama; program i dnevnik klijenta ostaju
+  return json_build_object('ok',true);
+end $$;
+
+revoke all on function public.kfit_acc_create(text,text,text), public.kfit_acc_reset(text,text), public.kfit_acc_remove(text) from anon, public;
+grant execute on function public.kfit_acc_create(text,text,text), public.kfit_acc_reset(text,text), public.kfit_acc_remove(text) to authenticated;
