@@ -48,13 +48,20 @@ function natReps(v){if(v instanceof Date){const d=new Date(v.getTime()+12*36e5);
  const L=s.match(/\d+/g)||[];if(/^[\d\s,./]+$/.test(s)&&L.length>1&&!/\//.test(s)){const a=L.map(Number);return{r:Math.min(...a)==Math.max(...a)?String(a[0]):Math.min(...a)+'-'+Math.max(...a)}}
  m=s.match(/^(\d+(?:-\d+)?)\s*([^\d\s-].*)$/);if(m)return{r:m[1],n:s.replace(/(\d)(s)\b/,'$1 $2')+'.'};return{r:s}}
 function natRest(v){const s=String(v??'').toLowerCase();const m=s.match(/(\d+(?:[.,]\d+)?)\s*(min|s|sec|sek)?/);if(!m)return'';const n=parseFloat(m[1].replace(',','.'));return Math.round(/min/.test(m[2]||'')||(!m[2]&&n<6)?n*60:n)}
-function natKg(v){if(v==null||v==='')return null;if(typeof v=='number')return v;const s=String(v).toLowerCase().replace(',','.');if(/rir|x\s*$|^z-|×/.test(s)&&!/kg/.test(s))return null;
+function natKg(v){if(v==null||v==='')return null;if(v instanceof Date)return new Date(v.getTime()+12*36e5).getUTCDate();if(typeof v=='number')return v;const s=String(v).toLowerCase().replace(',','.');if(/rir|x\s*$|^z-|×/.test(s)&&!/kg/.test(s))return null;
  let m=s.match(/(\d+(?:\.\d+)?)\s*kg/);if(m)return+m[1];m=s.match(/^(\d+(?:\.\d+)?)\s*\//);if(m)return+m[1];m=s.match(/^(\d+(?:\.\d+)?)\s*x\s*\d+/);if(m)return+m[1];m=s.match(/^(\d+(?:\.\d+)?)$/);return m?+m[1]:null}
+function natKR(v){if(v==null||v==='')return null;if(v instanceof Date){const d=new Date(v.getTime()+12*36e5),m=d.getUTCMonth()+1;return{kg:d.getUTCDate(),e:m<=5?m:null}}
+ if(typeof v=='number')return{r:v};const s=String(v).toLowerCase().replace(/,/g,'.').trim();if(/^\d{1,3}$/.test(s))return{r:+s};if(!s||/^[x×\s-]+$/.test(s))return null;
+ let m=s.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d)(?:\s*-\s*\d)?\s*$/);if(m)return{kg:+m[1],e:+m[2]};const kg=natKg(s),e=(s.match(/(?:\/|rir)\s*(\d)/)||[])[1];return kg!=null||e!=null?{kg:kg||0,e:e!=null?+e:null}:null}
 function natSplit(name){let n=name.replace(/^\d+\.\s*/,'').replace(/^core:\s*/i,'').trim();const ss=/^superset[:\s]/i.test(n)||/\bsuperset\b|susper ?set/i.test(n);n=n.replace(/^superset[:\s]*/i,'').replace(/\s*\bsuperset\b\s*$/i,'').trim();
  let parts=null,np=n.replace(/\([^)]*\)/g,''),m=np.match(/^(.+?)\s*\+\s*(.+)$/);if(m&&ss)parts=[m[1],m[2]];
  if(!parts&&/\/\//.test(n))parts=n.split(/\s*\/\/\s*/);
  if(!parts&&ss){m=n.match(/\(([^)]+?)\s+i\s+([^)]+)\)/);if(m)parts=[m[1],m[2]]}
  return{parts:(parts||[n]).map(x=>x.replace(/^superset\s+/i,'').trim()).filter(Boolean),ss:ss||!!parts}}
+/* početak 1. tjedna: datum iz naziva datoteke (npr. „…_07.11.xlsx” → prvi ponedjeljak od tog dana), inače unatrag od ovog tjedna */
+function histStart(fname,wmax){const m=String(fname||'').match(/(\d{1,2})[._-](\d{1,2})(?:[._-](\d{2,4}))?(?!\d)/);let d=null;
+ if(m){const y=m[3]?(m[3].length==2?2000+ +m[3]:+m[3]):+today().slice(0,4),cand=`${y}-${String(+m[2]).padStart(2,'0')}-${String(+m[1]).padStart(2,'0')}`;if(!isNaN(pd(cand))&&+m[2]<=12&&+m[1]<=31){const w=wdi(cand);d=w==0?cand:addD(cand,7-w)}}
+ if(!d||d>today())d=addD(monday(),-7*((wmax||0)+1));return d}
 function nativeRows(wb,X){const all=wb.SheetNames.map(n=>({n,R:X.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:'',raw:true}).map(r=>r.map(cellS))}));
  const flat=all.flatMap(s=>s.R.map(r=>r.filter(c=>c!=='').map(String).join(' | ')));const txt=flat.join('\n');
  const cm=txt.match(/klijent:\s*([^|(\n]+?)\s*(?:\((\d+)\s*god[^)]*\))?\s*(\d+(?:[.,]\d+)?)?\s*kg?\s*(?:\||$)/i),full=cm?cm[1].trim():'',[f,...ln]=full.split(/\s+/),age=cm&&cm[2],kg=cm&&cm[3]?num(cm[3]):'';
@@ -85,7 +92,8 @@ function nativeRows(wb,X){const all=wb.SheetNames.map(n=>({n,R:X.utils.sheet_to_
   const grp=sp.ss?(String(r[hdr.n]).match(/superset\s*(\d+)/i)||[])[1]||'':'';
   sp.parts.forEach((pn,k)=>{const R1=natReps(sp.parts.length>1&&rr[k]?rr[k]:(rv instanceof Date?rv:rr.length>1&&sp.parts.length==1?rv:rr[0]));
    let kg=null;for(const c of[...wk].reverse()){const ps=String(c).split(/\s*\/\/\s*/);const pick=sp.parts.length>1&&ps.length>1?ps[k]:ps[ps.length-1];const multi=ps.length>1||(String(c).includes('/')&&!/kg|rir/i.test(String(c)));if(sp.parts.length>1&&!multi&&k>0)break;kg=natKg(sp.parts.length>1&&multi&&ps.length==1?String(c).split('/')[k]:pick);if(kg!=null)break}
-   day.ex.push({n:pn.replace(/\s+/g,' '),ss:sp.ss?(grp?'G'+grp:'P'+i):'',s:S.s,r:R1.r||'10',rest,kg:kg??'',note:[R1.n,...note].filter(Boolean).map(x=>String(x).trim().replace(/([^.!?])$/,'$1.')).join(' ')})})}
+   const wv=(hdr.w||[]).map(j=>{const c=r[j];if(c===''||c==null)return null;if(sp.parts.length>1){const ps=String(c).split(/\s*\/\/\s*/);if(ps.length>1)return natKR(ps[k]);if(k>0)return null}return natKR(c)});
+   day.ex.push({wv,n:pn.replace(/\s+/g,' '),ss:sp.ss?(grp?'G'+grp:'P'+i):'',s:S.s,r:R1.r||'10',rest,kg:kg??'',note:[R1.n,...note].filter(Boolean).map(x=>String(x).trim().replace(/([^.!?])$/,'$1.')).join(' ')})})}
  /* superset oznake → A, B, C… redom */
  days.forEach(d=>{const map={};let c=0;d.ex.forEach((e,j)=>{if(!e.ss)return;const prev=d.ex[j-1];if(e.ss[0]=='G'||e.ss[0]=='P'){const key=e.ss[0]=='G'?e.ss:(prev&&prev.ss&&map[prev.ss]&&/superset/i.test('')?prev.ss:e.ss);map[key]=map[key]||String.fromCharCode(65+c++);e._ss=map[key]}});
   d.ex.forEach((e,j)=>{if(!e.ss)return;e.ss=e._ss;delete e._ss});
@@ -100,7 +108,16 @@ function nativeRows(wb,X){const all=wb.SheetNames.map(n=>({n,R:X.utils.sheet_to_
  const msg=[focus&&'Fokus: '+focus.trim(),info,...habits].filter(Boolean).join('\n');
  const C=[NAT_C,[f||'',ln.join(' '),kg||'',focus.trim(),[age&&age+' god.','Uvezeno iz tvoje Excelice'].filter(Boolean).join(' · '),msg,water||'',steps||'',...FT,...FR,'']];
  const P=[NAT_P];days.forEach(d=>d.ex.forEach((e,j)=>P.push([full,d.name,j?'':d.wd.map(i=>WDN[i]).join(', '),j?'':[warmAll,d.warm&&'Za ovaj dan:\n'+d.warm].filter(Boolean).join('\n\n'),e.n,e.ss,e.s,e.r,e.rest,e.kg,e.note])));
- return{C,P,who:full,nDays:days.length,nEx:P.length-1}}
+ /* povijest: tjedni treninga, koraci, prehrana */
+ const WDL=['ponedjeljak','utorak','srijeda','cetvrtak','petak','subota','nedjelja'],STP=[],FOOD=[];
+ all.forEach(({R})=>{let w=null,h=null,wS=false;R.forEach(r=>{const a=nrm(r[0]),tm=String(r[0]).match(/tjedan\s*(\d+)/i);if(tm&&r.filter(c=>c!=='').length==1){w=+tm[1]-1;h=null;wS=true;return}
+  if(/^dan u tjednu/.test(a)){if(!wS)w=w==null?0:w+1;wS=false;h={};r.forEach((c,j)=>{const n=nrm(c);if(/ostvaren/.test(n))h.st=j;else if(/protein/.test(n))h.p=j;else if(/ugljik/.test(n))h.c=j;else if(/^mast/.test(n))h.f=j;else if(/vod/.test(n))h.wa=j;else if(/koment|struktur/.test(n))h.cm=j});return}
+  const di=WDL.indexOf(a);if(w==null||!h||di<0)return;const v=j=>j==null?null:(typeof r[j]=='number'?r[j]:num(r[j]));
+  if(h.st!=null&&v(h.st))STP.push({w,di,n:Math.round(v(h.st))});
+  const p=v(h.p),c=v(h.c),f=v(h.f),wa=v(h.wa);if(p||c||f||wa)FOOD.push({w,di,p,c,f,kcal:p||c||f?Math.round((p||0)*4+(c||0)*4+(f||0)*9):null,ml:wa?Math.round(wa<20?wa*1000:wa):null,note:h.cm!=null?String(r[h.cm]||'').trim():''})})});
+ const hd={};days.forEach(d=>{hd[d.name]={wd:d.wd,ex:d.ex.map(e=>e.wv||[])}});
+ const wmax=Math.max(-1,...days.flatMap(d=>d.ex.flatMap(e=>(e.wv||[]).map((x,i)=>x?i:-1))),...STP.map(x=>x.w),...FOOD.map(x=>x.w));
+ return{C,P,who:full,nDays:days.length,nEx:P.length-1,hist:wmax>=0?{days:hd,steps:STP,food:FOOD,wmax}:null}}
 /* bolje prepoznavanje naziva: cijeli naziv → bez zagrada → sadržaj zagrada → prvi dio prije „ili” / „/” */
 function matchBest(name){const v=[name,name.replace(/\([^)]*\)/g,' '),(name.match(/\(([^)]+)\)/)||[])[1],name.split(/\s+ili\s+|\s*\/\s*|\s+[—–-]\s+/i)[0],name.replace(/\([^)]*\)/g,' ').split(/\s+[—–-]\s+/)[0]].filter(Boolean).map(s=>s.replace(/\s+/g,' ').trim());
  ((name.match(/\(([^)]+)\)/)||[])[1]||'').split(/\s+ili\s+|\s*\/\s*/).forEach(x=>x&&v.push(x.trim()));let best=null;for(const s of [...new Set(v)]){const m=matchEx(s);if(m&&m.q=='točno')return m;if(m&&!best)best=m}return best}
@@ -115,14 +132,14 @@ async function readImport(files,o){files=[].concat(files||[]).filter(Boolean);if
  try{const[X]=await Promise.all([loadXLSX(),loadLib().catch(()=>null)]);const wbs=[];for(const f of files)wbs.push({f,wb:X.read(await f.arrayBuffer(),{cellDates:true})});
   const nat=wbs.filter(x=>isNative(x.wb,X));let C,P,sheetN,label=files.length>1?files.length+' datoteka':files[0].name;
   if(nat.length){if(nat.length<wbs.length)throw new Error('Odjednom učitaj ili svoje programe (jedna Excelica po klijentu) ili tablicu po predlošku — ne oboje.');
-   C=[NAT_C];P=[NAT_P];const bad=[];for(const{f,wb}of nat){const r=nativeRows(wb,X);if(!r.who){bad.push(f.name);continue}C.push(r.C[1]);P.push(...r.P.slice(1))}
+   C=[NAT_C];P=[NAT_P];const bad=[];var HIST={};for(const{f,wb}of nat){const r=nativeRows(wb,X);if(!r.who){bad.push(f.name);continue}C.push(r.C[1]);P.push(...r.P.slice(1));if(r.hist)HIST[nrm(r.who)]={...r.hist,start:histStart(f.name,r.hist.wmax)}}
    if(bad.length)throw new Error('Ne nalazim red „Klijent: Ime Prezime …” u: '+bad.join(', '));sheetN='tvoj K-FIT format'}
   else{const wb=wbs[0].wb,rows=n=>X.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:'',raw:true}).filter(r=>r.some(c=>String(c).trim()!==''));
    const names=wb.SheetNames,progName=names.find(n=>/program|trening|plan/i.test(n)),cliName=names.find(n=>n!=progName&&!/upute|uputa|readme|info/i.test(n))||names[0];
    C=rows(cliName);P=progName?rows(progName):[];sheetN=cliName;if(C.length<2)throw new Error('List „'+cliName+'” nema podataka (treba red sa zaglavljem i barem jedan klijent).')}
   const hi=C.findIndex(r=>Object.keys(guessMap(r,IMP_C)).length>=2);const H=C[hi<0?0:hi];
   IMP={file:label,sheet:sheetN,native:!!nat.length,H,rows:C.slice((hi<0?0:hi)+1),map:guessMap(H,IMP_C),dup:'fill',pmode:'replace',PH:P[0]||[],prows:P.slice(1),pmap:P.length?guessMap(P[0],IMP_P):{},
-   cat:[],existing:COACH.list.slice()};try{IMP.cat=await API.catalog()}catch(e){}
+   cat:[],existing:COACH.list.slice(),hist:typeof HIST!='undefined'?HIST:{},histOn:true};try{IMP.cat=await API.catalog()}catch(e){}
   err.textContent='';impMapView(o)}catch(x){console.error(x);err.textContent=x.message||'Datoteka se ne može pročitati.'}}
 function impBuild(){const M=IMP.map,get=(r,k)=>{const i=Object.keys(M).find(j=>M[j]==k);return i==null?'':r[i]};const out=[];
  IMP.rows.forEach((r,ri)=>{let f=String(get(r,'f')||'').trim(),l=String(get(r,'l')||'').trim();const full=String(get(r,'full')||'').trim();if(!f&&full){const p=full.split(/\s+/);f=p.shift()||'';l=l||p.join(' ')}
@@ -145,15 +162,18 @@ ${nEx?`<label class="f">Klijenti koji već postoje u evidenciji<select class="in
 <div class="card flat" style="padding:12px"><div class="kick" style="margin-bottom:8px">Pregled (prvih 5)</div><div class="list">${L.slice(0,5).map(x=>`<div><div class="between"><span class="b s">${esc(x.f+' '+x.l)}</span>${x.ex?'<span class="chip">postoji</span>':'<span class="chip ok">novi</span>'}</div><div class="xs mute">${[x.em,x.tel,x.bd&&'rođ. '+fmt(x.bd),x.sd&&'od '+fmt(x.sd),x.pk&&'paket: '+x.pk,x.pp!=null&&x.pp+' €'+(x.paid?' (plaćeno)':''),x.kg&&x.kg+' kg'].filter(Boolean).map(esc).join(' · ')||'—'}</div></div>`).join('')}</div></div>
 ${pr?`<div class="card flat" style="padding:12px"><div class="kick" style="margin-bottom:8px">Program treninga (list „Program”)</div>${Object.values(pr.by).map(P=>`<div class="s" style="margin-bottom:6px"><b>${esc(P.c?P.c.f+' '+(P.c.l||''):P.who)}</b>${P.c?'':' <span class="chip bad">nema tog klijenta</span>'} · ${Object.values(P.days).map(d=>esc(d.name)+' ('+d.ex.length+')').join(', ')}</div>`).join('')}
 ${pr.apx.length?`<p class="xs mute" style="margin-top:6px"><b style="color:var(--ink)">Približno prepoznate (provjeri):</b> ${pr.apx.slice(0,15).map(([a,b])=>esc(a)+' → '+esc(b)).join(' · ')}</p>`:''}${pr.unk.length?`<p class="xs" style="color:var(--warn);margin-top:6px">Nisu pronađene u bazi, ulaze kao vlastite vježbe: ${pr.unk.slice(0,12).map(esc).join(', ')}${pr.unk.length>12?' …':''}</p>`:(pr.apx.length?'':'<p class="xs" style="color:var(--ok);margin-top:6px">Sve vježbe pronađene u bazi.</p>')}</div>`:''}
+${Object.keys(IMP.hist||{}).length?(()=>{const H=Object.values(IMP.hist),nw=H.reduce((a,h)=>a+Object.values(h.days).reduce((b,d)=>b+[...Array(h.wmax+1)].filter((_,w)=>d.ex.some(x=>x[w])).length,0),0),ns=H.reduce((a,h)=>a+h.steps.length,0),nf=H.reduce((a,h)=>a+h.food.length,0);
+ return `<div class="card flat stack" style="padding:12px;gap:8px"><label class="row" style="gap:10px;align-items:flex-start"><input type="checkbox" id="imph" ${IMP.histOn?'checked':''} style="margin-top:3px"><span><b class="s">Uvezi i odrađene tjedne</b><br><span class="xs mute">${nw} treninga (kg i RIR)${ns?` · ${ns} dana koraka`:''}${nf?` · ${nf} dana prehrane`:''}. Ponavljanja koja nisu upisana uzimaju se po planu.</span></span></label>
+ ${H.map((h,i)=>`<label class="f" style="font-size:13px">${esc(Object.keys(IMP.hist)[i]).replace(/^./,c=>c.toUpperCase())} — 1. tjedan je počeo<input class="inp" type="date" data-hs="${esc(Object.keys(IMP.hist)[i])}" value="${h.start}"></label>`).join('')}</div>`})():''}
 ${pr?`<label class="f">Ako klijent već ima program u appu<select class="inp" id="imppm"><option value="replace" ${IMP.pmode=='replace'?'selected':''}>Zamijeni ga ovim (novi blok)</option><option value="add" ${IMP.pmode=='add'?'selected':''}>Zadrži ga, dodaj samo dane kojih nema</option></select></label>`:''}
 <div id="imperr" class="s" style="color:var(--bad)"></div>
 <button class="btn acc full" id="impgo" ${L.length?'':'disabled'}>${I('check')} Uvezi ${nNew+(IMP.dup=='fill'?nEx:0)} klijenata</button><button class="btn ghost sm" id="impback">${I('back','sm')} Druga datoteka</button></div>`;
  o.querySelector('[data-x]').onclick=()=>close(o);
  o.querySelectorAll('[data-col]').forEach(s=>s.onchange=()=>{const k=s.value;Object.keys(IMP.map).forEach(j=>{if(IMP.map[j]==k&&k)delete IMP.map[j]});if(k)IMP.map[s.dataset.col]=k;else delete IMP.map[s.dataset.col];impMapView(o)});
- const pm=o.querySelector('#imppm');if(pm)pm.onchange=()=>{IMP.pmode=pm.value};const dp=o.querySelector('#impdup');if(dp)dp.onchange=()=>{IMP.dup=dp.value;impMapView(o)};
+ const hc=o.querySelector('#imph');if(hc)hc.onchange=()=>{IMP.histOn=hc.checked};o.querySelectorAll('[data-hs]').forEach(i=>i.onchange=()=>{const k=i.dataset.hs,v=i.value;if(v&&IMP.hist[k])IMP.hist[k].start=wdi(v)?addD(v,-wdi(v)):v;i.value=IMP.hist[k].start});const pm=o.querySelector('#imppm');if(pm)pm.onchange=()=>{IMP.pmode=pm.value};const dp=o.querySelector('#impdup');if(dp)dp.onchange=()=>{IMP.dup=dp.value;impMapView(o)};
  o.querySelector('#impback').onclick=()=>{close(o);importM()};
  o.querySelector('#impgo').onclick=async e=>{e.target.disabled=true;e.target.textContent='Uvozim…';try{const r=await runImport(L,pr);impDone(o,r)}catch(x){console.error(x);o.querySelector('#imperr').textContent='Uvoz nije uspio: '+(x.message||x)+'. Ništa nije djelomično obrisano — možeš pokušati ponovno.';e.target.disabled=false;e.target.innerHTML=I('check')+' Pokušaj ponovno'}}}
-async function runImport(L,pr){const t=today(),ts=new Date().toISOString(),uid7=()=>Math.random().toString(36).slice(2,9),B={clients:[],packs:[],pays:[],progs:[],weights:[],log:[]};let nNew=0,nUpd=0,nPk=0,nPr=0;
+async function runImport(L,pr){const t=today(),ts=new Date().toISOString(),uid7=()=>Math.random().toString(36).slice(2,9),B={clients:[],packs:[],pays:[],progs:[],weights:[],log:[]};let nNew=0,nUpd=0,nPk=0,nPr=0,nHist=0;
  const catM=n=>{if(!n)return null;const T=[...tokS(n)];return IMP.cat.find(c=>nrm(c.n)==nrm(n))||IMP.cat.filter(c=>{const C=tokS(c.n);return T.length&&T.every(w=>C.has(w))}).sort((a,b)=>tokS(a.n).size-tokS(b.n).size)[0]||null};
  for(const x of L){if(x.ex&&IMP.dup=='skip')continue;
   const noteTxt=['Uvezeno iz Excela ('+fmt(t)+')',x.h&&'Visina: '+x.h+' cm',x.kg&&'Težina: '+x.kg+' kg',x.note].filter(Boolean).join(' · ');
@@ -164,10 +184,22 @@ async function runImport(L,pr){const t=today(),ts=new Date().toISOString(),uid7=
    if(x.paid&&p)B.pays.push({id:uid7(),c:c.id,kid:pk.id,d:s,a:p,m:x.pm||'Gotovina',pk:pk.n,n:'Uvezeno iz Excela'})}
   if(x.kg)B.weights.push({c:c.id,r:{id:'weight-'+t,kind:'weight',day:t,data:{kg:x.kg}}})}
  if(pr)for(const P of Object.values(pr.by)){if(!P.c)continue;const cid=P.c.id||(P.c.ex&&P.c.ex.id)||(L.find(x=>x.ri==P.c.ri)||{}).id;if(!cid)continue;
-  const days=Object.values(P.days).map(d=>({id:uid(),name:d.name,wd:d.wd,rule:'double',warm:d.warm||'',ex:d.ex.map(({q,src,...e})=>e)}));const xr=L.find(y=>y.id==cid)||{},E=EMPTY_PROG();
-  B.progs.push({c:cid,mode:IMP.pmode,p:{...E,msg:xr.msg||E.msg,water:xr.water?Math.round(xr.water<20?xr.water*1000:xr.water):E.water,steps:xr.steps||E.steps,...Object.fromEntries(['kT','pT','cT','fT','kR','pR','cR','fR','foodNote'].map(k=>[k,xr[k]||'']).filter(([,v])=>v)),days,updated:ts}});nPr++}
- await API.importAll(B);return{nNew,nUpd,nPk,nPay:B.pays.length,nPr}}
-function impDone(o,r){o.querySelector('.sheet').innerHTML=`<div class="stack">${sheetHd('Uvoz gotov')}<div class="card hero"><div class="grid2">${[['Novih klijenata',r.nNew],['Dopunjenih',r.nUpd],['Paketa',r.nPk],['Uplata',r.nPay],['Programa',r.nPr]].map(([l,v])=>`<div><div class="xs mute">${l}</div><div class="big" style="font-size:26px">${v}</div></div>`).join('')}</div></div>
+  const days=Object.values(P.days).map(d=>({id:'d'+hashS(cid+'|'+d.name),name:d.name,wd:d.wd,rule:'double',warm:d.warm||'',ex:d.ex.map(({q,src,...e})=>e)}));const xr=L.find(y=>y.id==cid)||{},E=EMPTY_PROG();
+  B.progs.push({c:cid,mode:IMP.pmode,p:{...E,msg:xr.msg||E.msg,water:xr.water?Math.round(xr.water<20?xr.water*1000:xr.water):E.water,steps:xr.steps||E.steps,...Object.fromEntries(['kT','pT','cT','fT','kR','pR','cR','fR','foodNote'].map(k=>[k,xr[k]||'']).filter(([,v])=>v)),days,updated:ts}});nPr++;
+  const H=IMP.histOn&&IMP.hist&&(IMP.hist[nrm(P.who)]||IMP.hist[nrm(xr.f+' '+xr.l)]);if(H)nHist+=histLogs(H,days,cid,B)}
+ await API.importAll(B);return{nNew,nUpd,nPk,nPay:B.pays.length,nPr,nHist}}
+const hashS=s=>{let h=2166136261;for(const c of String(s))h=Math.imul(h^c.charCodeAt(0),16777619);return(h>>>0).toString(36)};
+/* odrađeni tjedni iz Excelice → treninzi u dnevniku (ponavljanja = donja granica plana ako nisu upisana), koraci, prehrana, voda */
+function histLogs(H,days,cid,B){const t=today(),push=r=>B.weights.push({c:cid,r});let n=0;
+ days.forEach((d,di)=>{const h=H.days[d.name];if(!h)return;const wd=(d.wd||[])[0]??di;
+  for(let w=0;w<=H.wmax;w++){const date=addD(H.start,7*w+wd);if(date>t)continue;
+   const ex=d.ex.map((e,j)=>{let v=(h.ex[j]||[])[w];if(!v)return null;if(v.r!=null&&!v.kg&&+e.kg)v={kg:v.r,e:null};const lo=parseInt(String(e.r))||0,sets=[...Array(+e.s||3)].map((_,si)=>{const o={kg:+v.kg||0};if(e.type=='time')o.t=+e.t||0;else o.r=v.r!=null&&!v.kg?v.r:lo;if(si==(+e.s||3)-1&&v.e!=null){o.e=v.e;o.es='rir'}return o});
+    return{id:e.id,lib:e.lib,n:e.n,custom:e.custom,type:e.type,ss:e.ss,mus:e.mus,mus2:e.mus2,tgt:{kg:e.kg,reps:e.r,t:e.t,rule:d.rule||'double'},cn:'',sets}}).filter(Boolean);
+   if(!ex.length)continue;n++;push({id:'xl-'+d.id+'-'+date,kind:'workout',day:date,data:{dayId:d.id,name:d.name,dur:null,rpe:null,note:'Uvezeno iz Excelice (tjedan '+(w+1)+')',imp:true,prs:[],ex}})}});
+ (H.steps||[]).forEach(x=>{const date=addD(H.start,7*x.w+x.di);if(date<=t)push({id:'steps-'+date,kind:'steps',day:date,data:{n:x.n}})});
+ (H.food||[]).forEach(x=>{const date=addD(H.start,7*x.w+x.di);if(date>t)return;if(x.kcal||x.p)push({id:'food-'+date,kind:'food',day:date,data:Object.fromEntries(Object.entries({kcal:x.kcal,p:x.p,c:x.c,f:x.f}).filter(([,v])=>v!=null))});if(x.ml)push({id:'water-'+date,kind:'water',day:date,data:{ml:x.ml}})});
+ return n}
+function impDone(o,r){o.querySelector('.sheet').innerHTML=`<div class="stack">${sheetHd('Uvoz gotov')}<div class="card hero"><div class="grid2">${[['Novih klijenata',r.nNew],['Dopunjenih',r.nUpd],['Paketa',r.nPk],['Uplata',r.nPay],['Programa',r.nPr],['Treninga iz povijesti',r.nHist||0]].map(([l,v])=>`<div><div class="xs mute">${l}</div><div class="big" style="font-size:26px">${v}</div></div>`).join('')}</div></div>
 <p class="s mute">Klijenti su odmah u K-FIT evidenciji. Kad se registriraju istim emailom, sami se povežu s programom. Bez emaila ih možeš povezati kasnije — samo im upiši email u evidenciju.</p><button class="btn acc" data-x>Gotovo</button></div>`;
  o.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{close(o);coachHome()})}
 async function templateXlsx(){try{const X=await loadXLSX(),wb=X.utils.book_new();
