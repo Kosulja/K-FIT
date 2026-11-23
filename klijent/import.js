@@ -51,7 +51,7 @@ function natRest(v){const s=String(v??'').toLowerCase();const m=s.match(/(\d+(?:
 function natKg(v){if(v==null||v==='')return null;if(v instanceof Date)return new Date(v.getTime()+12*36e5).getUTCDate();if(typeof v=='number')return v;const s=String(v).toLowerCase().replace(',','.');if(/rir|x\s*$|^z-|×/.test(s)&&!/kg/.test(s))return null;
  let m=s.match(/(\d+(?:\.\d+)?)\s*kg/);if(m)return+m[1];m=s.match(/^(\d+(?:\.\d+)?)\s*\//);if(m)return+m[1];m=s.match(/^(\d+(?:\.\d+)?)\s*x\s*\d+/);if(m)return+m[1];m=s.match(/^(\d+(?:\.\d+)?)$/);return m?+m[1]:null}
 function natKR(v){if(v==null||v==='')return null;if(v instanceof Date){const d=new Date(v.getTime()+12*36e5),m=d.getUTCMonth()+1;return{kg:d.getUTCDate(),e:m<=5?m:null}}
- if(typeof v=='number')return{r:v};const s=String(v).toLowerCase().replace(/,/g,'.').trim();if(/^\d{1,3}$/.test(s))return{r:+s};if(!s||/^[x×\s-]+$/.test(s))return null;
+ if(typeof v=='number')return v>20?{kg:v,e:null}:{r:v};const s=String(v).toLowerCase().replace(/,/g,'.').trim();if(/^\d{1,3}$/.test(s))return +s>20?{kg:+s,e:null}:{r:+s};if(!s||/^[x×\s-]+$/.test(s))return null;
  let m=s.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d)(?:\s*-\s*\d)?\s*$/);if(m)return{kg:+m[1],e:+m[2]};const kg=natKg(s),e=(s.match(/(?:\/|rir)\s*(\d)/)||[])[1];return kg!=null||e!=null?{kg:kg||0,e:e!=null?+e:null}:null}
 function natSplit(name){let n=name.replace(/^\d+\.\s*/,'').replace(/^core:\s*/i,'').trim();const ss=/^superset[:\s]/i.test(n)||/\bsuperset\b|susper ?set/i.test(n);n=n.replace(/^superset[:\s]*/i,'').replace(/\s*\bsuperset\b\s*$/i,'').trim();
  let parts=null,np=n.replace(/\([^)]*\)/g,''),m=np.match(/^(.+?)\s*\+\s*(.+)$/);if(m&&ss)parts=[m[1],m[2]];
@@ -93,6 +93,7 @@ function nativeRows(wb,X){const all=wb.SheetNames.map(n=>({n,R:X.utils.sheet_to_
   sp.parts.forEach((pn,k)=>{const R1=natReps(sp.parts.length>1&&rr[k]?rr[k]:(rv instanceof Date?rv:rr.length>1&&sp.parts.length==1?rv:rr[0]));
    let kg=null;for(const c of[...wk].reverse()){const ps=String(c).split(/\s*\/\/\s*/);const pick=sp.parts.length>1&&ps.length>1?ps[k]:ps[ps.length-1];const multi=ps.length>1||(String(c).includes('/')&&!/kg|rir/i.test(String(c)));if(sp.parts.length>1&&!multi&&k>0)break;kg=natKg(sp.parts.length>1&&multi&&ps.length==1?String(c).split('/')[k]:pick);if(kg!=null)break}
    const wv=(hdr.w||[]).map(j=>{const c=r[j];if(c===''||c==null)return null;if(sp.parts.length>1){const ps=String(c).split(/\s*\/\/\s*/);if(ps.length>1)return natKR(ps[k]);if(k>0)return null}return natKR(c)});
+   {const lk=[...wv].reverse().find(x=>x&&x.kg);if(lk)kg=lk.kg;else if(wv.some(Boolean))kg=null}
    day.ex.push({wv,n:pn.replace(/\s+/g,' '),ss:sp.ss?(grp?'G'+grp:'P'+i):'',s:S.s,r:R1.r||'10',rest,kg:kg??'',note:[R1.n,...note].filter(Boolean).map(x=>String(x).trim().replace(/([^.!?])$/,'$1.')).join(' ')})})}
  /* superset oznake → A, B, C… redom */
  days.forEach(d=>{const map={};let c=0;d.ex.forEach((e,j)=>{if(!e.ss)return;const prev=d.ex[j-1];if(e.ss[0]=='G'||e.ss[0]=='P'){const key=e.ss[0]=='G'?e.ss:(prev&&prev.ss&&map[prev.ss]&&/superset/i.test('')?prev.ss:e.ss);map[key]=map[key]||String.fromCharCode(65+c++);e._ss=map[key]}});
