@@ -30,19 +30,86 @@ function maxStreak(L,prog){const ok=new Set([...byKind('workout',L).map(r=>r.day
 function waterRun(L,prog){const g=(prog&&prog.water)||3000,ok=byKind('water',L).filter(r=>(+r.data.ml||0)>=g).map(r=>r.day).sort();let best=0,cur=0,prev=null;ok.forEach(d=>{cur=prev&&addD(prev,1)==d?cur+1:1;best=Math.max(best,cur);prev=d});return best}
 
 /* ---------- značke ---------- */
-function badges(L=LOGS,prog=PROG){const W=workouts(L),nW=W.length,prs=W.reduce((a,r)=>a+(r.data.prs||[]).length,0),s=setts(L),Wt=byKind('weight',L).sort((a,b)=>a.day.localeCompare(b.day));
- const maxVol=Math.max(0,...W.map(vol)),stepsMax=Math.max(0,...byKind('steps',L).map(r=>+r.data.n||0)),ci=byKind('checkin',L).length,ad=adherence(L,prog,26),perfect=ad.filter(w=>w.dn>=w.pl).length;
+/* ---------- ZNAČKE: razine (bronca → crna), snaga, volumen, navike ---------- */
+const LIFTS={bp:{n:'Bench press',ids:['Barbell_Bench_Press_-_Medium_Grip','Barbell_Bench_Press'],rx:/^(bench( press)?|benč|potisak s ravne klupe)$/i},
+ sq:{n:'Čučanj',ids:['Barbell_Squat','Barbell_Full_Squat'],rx:/^(čučanj|cucanj|back squat|squat)( sa šipkom)?$/i},
+ dl:{n:'Mrtvo dizanje',ids:['Barbell_Deadlift','Sumo_Deadlift','Trap_Bar_Deadlift'],rx:/^(mrtvo dizanje|deadlift|sumo deadlift)$/i},
+ oh:{n:'Potisak iznad glave',ids:['Standing_Military_Press','Barbell_Shoulder_Press','Seated_Barbell_Military_Press'],rx:/^(military press|ohp|vojnički potisak)$/i}};
+const isLift=(e,k)=>{const L=LIFTS[k];return e.lib&&!e.custom?L.ids.includes(e.lib):L.rx.test(String(e.n||e.hr||'').trim())};
+function liftMax(W,k){let m=0;W.forEach(r=>(r.data.ex||[]).forEach(e=>{if(isLift(e,k))(e.sets||[]).forEach(x=>{if((+x.r||0)>=1)m=Math.max(m,+x.kg||0)})}));return m}
+const TIERC=['#b9825a','#b8c0cb','#d6b25e','#f2efe6'],TIERN=['Bronca','Srebro','Zlato','Crna'];
+function bStats(L=LOGS,prog=PROG){const W=workouts(L);let reps=0,life=0,top=0,maxPrDay=0,comeback=0,early=0,night=0,wkend=0;const exs=new Set();
+ W.forEach((r,i)=>{(r.data.ex||[]).forEach(e=>{exs.add(e.lib||String(e.n||'').toLowerCase());(e.sets||[]).forEach(x=>{const kg=+x.kg||0,n=+x.r||0;reps+=n;life+=kg*n;if(n>=1&&(e.lib||'').startsWith('Barbell')||n>=1&&(e.lib||'').startsWith('Trap_Bar')||n>=1&&isLift(e,'sq')||n>=1&&isLift(e,'bp')||n>=1&&isLift(e,'dl'))top=Math.max(top,kg)})});
+  maxPrDay=Math.max(maxPrDay,(r.data.prs||[]).length);if(i&&daysTo(r.day)-daysTo(W[i-1].day)>=14)comeback++;
+  const h=r.data.hr;if(h!=null&&h<7)early++;if(h!=null&&h>=21)night++;if(wdi(r.day)>=5)wkend++});
+ const wks=new Set(W.map(r=>monday(r.day)));let wrun=0,cur=0,prev=null;[...wks].sort().forEach(m=>{cur=prev&&addD(prev,7)==m?cur+1:1;wrun=Math.max(wrun,cur);prev=m});
+ const Wt=byKind('weight',L).sort((a,b)=>a.day.localeCompare(b.day)),bw=Wt.length?+Wt[Wt.length-1].data.kg:0;
+ const M=byKind('measure',L).sort((a,b)=>a.day.localeCompare(b.day)).filter(r=>+r.data.waist),waistDrop=M.length>1?(+M[0].data.waist)-(+M[M.length-1].data.waist):0;
+ const lift={};Object.keys(LIFTS).forEach(k=>lift[k]=liftMax(W,k));
+ return{W,nW:W.length,reps,life,top,maxPrDay,comeback,early,night,wkend,variety:exs.size,wrun,bw,waistDrop,lift,photos:byKind('photos',L).length}}
+function badges(L=LOGS,prog=PROG){const S=bStats(L,prog),W=S.W,prs=W.reduce((a,r)=>a+(r.data.prs||[]).length,0),s=setts(L),Wt=byKind('weight',L).sort((a,b)=>a.day.localeCompare(b.day));
+ const maxVol=Math.max(0,...W.map(vol)),stepsMax=Math.max(0,...byKind('steps',L).map(r=>+r.data.n||0)),ci=byKind('checkin',L).length,ad=adherence(L,prog,52),perfect=ad.filter(w=>w.dn>=w.pl).length;
  let goalP=0;if(s.goalKg&&Wt.length){const a=+Wt[0].data.kg,b=+Wt[Wt.length-1].data.kg,tot=a-s.goalKg;goalP=Math.abs(tot)<.05?1:Math.max(0,Math.min(1,(a-b)/tot))}
- const B=[['first','Prvi korak','Prvi odrađeni trening','play',nW,1],['w10','Zagrijan','10 treninga','dumb',nW,10],['w25','Redovit','25 treninga','dumb',nW,25],['w50','Neumoran','50 treninga','dumb',nW,50],['w100','Legenda','100 treninga','trophy',nW,100],
-  ['streak7','Tjedan bez pauze','7 dana zaredom s treningom ili ispunjenom vodom','flame',maxStreak(L,prog),7],['perfect','Savršen tjedan','Svi planirani treninzi u tjednu','check',perfect,1],['perfect4','Mjesec discipline','4 savršena tjedna','check',perfect,4],
-  ['pr1','Prvi rekord','Prvi osobni rekord','trophy',prs,1],['pr10','Lovac na rekorde','10 osobnih rekorda','trophy',prs,10],['ton','5 tona','5 000 kg volumena u jednom treningu','bolt',maxVol,5000],
-  ['water7','Hidriran','Cilj vode 7 dana zaredom','drop',waterRun(L,prog),7],['steps10k','10k dan','10 000 koraka u danu','steps',stepsMax,10000],['checkin4','Iskreno','4 tjedna check-ina','heart',ci,4],['clean7','Tjedan po planu','7 dana zaredom bez odstupanja','check',cleanRun(L),7],
+ const kg=n=>n.toLocaleString('hr-HR')+' kg',t=n=>(n/1000).toLocaleString('hr-HR')+' t';
+ /* [kategorija, naslov kategorije, ikona, vrijednost, jedinica, razine: [id, prag, naziv, opis]] */
+ const C=[
+  ['tr','Treninzi','dumb',S.nW,'',[['first',1,'Prvi korak','Prvi odrađeni trening'],['w10',10,'Zagrijan','10 treninga'],['w25',25,'Redovit','25 treninga'],['w50',50,'Neumoran','50 treninga'],['w100',100,'Legenda','100 treninga'],['w250',250,'Teretana je moja kuća','250 treninga']]],
+  ['wk','Tjedni zaredom','flame',S.wrun,' tj.',[['wk4',4,'Mjesec bez rupe','4 tjedna zaredom s barem jednim treningom'],['wk12',12,'Tromjesečje','12 tjedana zaredom'],['wk26',26,'Pola godine','26 tjedana zaredom'],['wk52',52,'Cijela godina','52 tjedna zaredom']]],
+  ['pf','Savršeni tjedni','check',perfect,'',[['perfect',1,'Savršen tjedan','Svi planirani treninzi u tjednu'],['perfect4',4,'Mjesec discipline','4 savršena tjedna'],['perfect12',12,'Bez izgovora','12 savršenih tjedana']]],
+  ['pr','Osobni rekordi','trophy',prs,'',[['pr1',1,'Prvi rekord','Prvi osobni rekord'],['pr10',10,'Lovac na rekorde','10 osobnih rekorda'],['pr25',25,'Kolekcionar','25 osobnih rekorda'],['pr50',50,'Stroj za rekorde','50 osobnih rekorda'],['pr100',100,'Nezaustavljiv','100 osobnih rekorda']]],
+  ['bp','Bench press','dumb',S.lift.bp,' kg',[['bp60',60,'Bench 60','60 kg na bench pressu'],['bp80',80,'Bench 80','80 kg na bench pressu'],['bp100',100,'Klub 100','100 kg na bench pressu'],['bp120',120,'Bench 120','120 kg na bench pressu'],['bp140',140,'Bench 140','140 kg na bench pressu']]],
+  ['sq','Čučanj','dumb',S.lift.sq,' kg',[['sq60',60,'Čučanj 60','60 kg u čučnju'],['sq100',100,'Čučanj 100','100 kg u čučnju'],['sq140',140,'Čučanj 140','140 kg u čučnju'],['sq180',180,'Čučanj 180','180 kg u čučnju']]],
+  ['dl','Mrtvo dizanje','dumb',S.lift.dl,' kg',[['dl80',80,'Mrtvo 80','80 kg u mrtvom dizanju'],['dl120',120,'Mrtvo 120','120 kg u mrtvom dizanju'],['dl160',160,'Mrtvo 160','160 kg u mrtvom dizanju'],['dl200',200,'Mrtvo 200','200 kg u mrtvom dizanju'],['dl250',250,'Mrtvo 250','250 kg u mrtvom dizanju']]],
+  ['oh','Potisak iznad glave','dumb',S.lift.oh,' kg',[['oh40',40,'Iznad glave 40','40 kg na potisku iznad glave'],['oh60',60,'Iznad glave 60','60 kg na potisku iznad glave'],['oh80',80,'Iznad glave 80','80 kg na potisku iznad glave']]],
+  ['vl','Ukupno podignuto','bolt',S.life,' kg',[['vl1',1500,'Auto','1,5 t ukupno, koliko teži auto'],['vl6',6000,'Slon','6 t ukupno, koliko teži slon'],['vl40',40000,'Putnički avion','40 t ukupno, koliko teži prazan putnički avion'],['vl150',150000,'Plavi kit','150 t ukupno, koliko teži plavi kit'],['vl1k',1000000,'Tisuću tona','1 000 t ukupno']]],
+  ['tv','Volumen u jednom treningu','bolt',maxVol,' kg',[['ton',5000,'5 tona','5 000 kg u jednom treningu'],['tv10',10000,'10 tona','10 000 kg u jednom treningu'],['tv15',15000,'15 tona','15 000 kg u jednom treningu']]],
+  ['rp','Ponavljanja','play',S.reps,'',[['rp1k',1000,'Tisuću ponavljanja','1 000 ponavljanja ukupno'],['rp5k',5000,'Pet tisuća','5 000 ponavljanja ukupno'],['rp10k',10000,'Deset tisuća','10 000 ponavljanja ukupno'],['rp25k',25000,'Dvadeset pet tisuća','25 000 ponavljanja ukupno']]],
+  ['stp','Koraci u danu','steps',stepsMax,'',[['steps10k',10000,'10k dan','10 000 koraka u danu'],['steps15k',15000,'15k dan','15 000 koraka u danu'],['steps20k',20000,'20k dan','20 000 koraka u danu']]]];
+ const bp=S.bw?S.lift.bp/S.bw:0,sq=S.bw?S.lift.sq/S.bw:0,dl=S.bw?S.lift.dl/S.bw:0;
+ const ONE=[['club100','Klub 100','100 kg na bilo kojoj vježbi sa šipkom','trophy',S.top,100],
+  ['bwbp','Vlastita težina','Bench press s vlastitom težinom','scale',bp,1],['bwsq','Čučanj 1,5×','Čučanj s 1,5× vlastite težine','scale',sq,1.5],['bwdl','Mrtvo 2×','Mrtvo dizanje s 2× vlastite težine','scale',dl,2],
+  ['prday','Dan za rekorde','3 osobna rekorda u jednom treningu','trophy',S.maxPrDay,3],['comeback','Povratak','Trening nakon 2 tjedna pauze. Bitno je da si se vratio.','heart',S.comeback,1],
+  ['early','Ranoranilac','Trening započet prije 7 sati','sun',S.early,1],['night','Noćna smjena','Trening započet nakon 21 sat','moon',S.night,1],['wkend','Vikend ratnik','10 treninga vikendom','cal',S.wkend,10],
+  ['variety','Svestran','25 različitih vježbi','grid',S.variety,25],['streak7','Tjedan bez pauze','7 dana zaredom s treningom ili ispunjenom vodom','flame',maxStreak(L,prog),7],
+  ['water7','Hidriran','Cilj vode 7 dana zaredom','drop',waterRun(L,prog),7],['clean7','Tjedan po planu','7 dana zaredom bez odstupanja','check',cleanRun(L),7],['checkin4','Iskreno','4 tjedna check-ina','heart',ci,4],
+  ['photo1','Prva slika','Prve fotografije napretka','user',S.photos,1],['waist5','Minus 5 cm','5 cm manje u struku','body',S.waistDrop,5],
   ['goalhalf','Pola puta','Pola puta do ciljane težine','scale',goalP,.5],['goal','Cilj!','Ciljana težina postignuta','scale',goalP,1]];
- return B.map(([id,t,d,ic,v,need])=>({id,t,d,ic,p:Math.min(1,(v||0)/need),v,need,on:(v||0)>=need}))}
-function newBadges(){const B=badges().filter(b=>b.on).map(b=>b.id),k='kfitk-badges-'+(CID||''),seen=LS.get(k,null);LS.set(k,B);if(!seen)return[];return badges().filter(b=>b.on&&!seen.includes(b.id))}
-function badgeGrid(L,prog){const B=badges(L,prog),on=B.filter(b=>b.on).length,next=B.filter(b=>!b.on).sort((a,b)=>b.p-a.p)[0];
- return `<div class="card hero"><div class="between"><div><div class="kick">Značke</div><div class="big" style="margin-top:6px">${on}<span class="mute" style="font-size:20px"> / ${B.length}</span></div></div>${next?`<div style="text-align:right;max-width:60%"><div class="xs mute">Najbliža sljedeća</div><div class="b s">${esc(next.t)}</div><div class="bar" style="margin-top:6px"><i style="width:${next.p*100}%"></i></div></div>`:'<span class="chip ok">Sve otključano!</span>'}</div></div>
-<div class="badges">${B.map(b=>`<div class="badge ${b.on?'on':''}" title="${esc(b.d)}"><div class="bi">${I(b.ic)}</div><div class="b xs" style="margin-top:6px">${esc(b.t)}</div><div class="xs mute" style="line-height:1.25">${esc(b.d)}</div>${b.on?'':`<div class="bar" style="height:5px;margin-top:6px"><i style="width:${b.p*100}%"></i></div>`}</div>`).join('')}</div>`}
+ const out=[];C.forEach(([cat,ct,ic,v,u,T])=>T.forEach(([id,need,tt,d],i)=>out.push({id,cat,ct,t:tt,d,ic,v:v||0,u,need,tier:T.length<2?2:Math.round(i*3/(T.length-1)),lvl:i,of:T.length,p:Math.min(1,(v||0)/need),on:(v||0)>=need})));
+ ONE.forEach(([id,tt,d,ic,v,need])=>out.push({id,t:tt,d,ic,v:v||0,need,tier:2,p:Math.min(1,(v||0)/need),on:(v||0)>=need}));
+ return out}
+function newBadges(){const B=badges().filter(b=>b.on).map(b=>b.id),k='kfitk-badges2-'+(CID||''),seen=LS.get(k,null);LS.set(k,B);if(!seen)return[];return badges().filter(b=>b.on&&!seen.includes(b.id))}
+const medal=(b,big)=>`<div class="bi${big?' big':''}" style="--tc:${b.on?TIERC[b.tier]:'var(--line)'}">${I(b.ic)}</div>`;
+function badgeGrid(L,prog){const B=badges(L,prog),on=B.filter(b=>b.on).length,next=B.filter(b=>!b.on&&b.p>0).sort((a,b)=>b.p-a.p)[0];
+ const cats=[...new Set(B.filter(b=>b.cat).map(b=>b.cat))].map(c=>{const T=B.filter(b=>b.cat==c),got=T.filter(b=>b.on),top=got[got.length-1],nx=T.find(b=>!b.on);return{c,T,got,top,nx,show:top||T[0]}});
+ window.BADGES_L=[L,prog];
+ return `<div class="card hero"><div class="between"><div><div class="kick">Značke</div><div class="big" style="margin-top:6px">${on}<span class="mute" style="font-size:20px"> / ${B.length}</span></div></div>${next?`<div style="text-align:right;max-width:60%"><div class="xs mute">Najbliža sljedeća</div><div class="b s">${esc(next.t)}</div><div class="bar" style="margin-top:6px"><i style="width:${next.p*100}%"></i></div></div>`:''}</div></div>
+<h3 style="margin:6px 0 0">Razine</h3>
+<div class="badges">${cats.map(x=>{const b=x.show,nx=x.nx;return `<button type="button" class="badge ${x.top?'on':''}" onclick="badgeM('${x.c}')">${medal(x.top||b)}<div class="b xs" style="margin-top:8px">${esc((x.top||b).t)}</div><div class="xs mute" style="line-height:1.25">${esc(b.ct)}</div><div class="lv">${x.T.map(t=>`<i class="${t.on?'on':''}" style="${t.on?'background:'+TIERC[t.tier]:''}"></i>`).join('')}</div>${nx?`<div class="bar" style="height:5px;margin-top:6px"><i style="width:${nx.p*100}%"></i></div>`:''}</button>`}).join('')}</div>
+<h3 style="margin:6px 0 0">Posebne</h3>
+<div class="badges">${B.filter(b=>!b.cat).map(b=>`<button type="button" class="badge ${b.on?'on':''}" onclick="badgeM('${b.id}')">${medal(b)}<div class="b xs" style="margin-top:8px">${esc(b.t)}</div><div class="xs mute" style="line-height:1.25">${esc(b.d)}</div>${b.on?'':`<div class="bar" style="height:5px;margin-top:6px"><i style="width:${b.p*100}%"></i></div>`}</button>`).join('')}</div>`}
+function bVal(b){const v=b.v;if(b.u==' kg')return Math.round(v).toLocaleString('hr-HR')+' kg';if(/^bw/.test(b.id))return v?(Math.round(v*100)/100).toLocaleString('hr-HR')+'× težine':'';return Math.round(v*100)/100===v?v.toLocaleString('hr-HR')+(b.u||''):(Math.round(v*100)/100).toLocaleString('hr-HR')}
+function badgeM(key){const[L,prog]=window.BADGES_L||[LOGS,PROG],B=badges(L,prog),T=B.filter(b=>b.cat==key),one=B.find(b=>b.id==key),list=T.length?T:[one],head=T.length?T[0].ct:one.t,cur=bVal(list[0]);
+ const o=sheet(`<div class="stack">${sheetHd(head)}<p class="s mute">Trenutno: <b style="color:var(--ink)">${list[0].v?esc(cur):'još nema upisa'}</b></p>
+<div class="list">${list.map(b=>`<div class="row" style="gap:12px">${medal(b)}<div style="flex:1;min-width:0"><div class="b">${esc(b.t)}${b.cat?` <span class="xs mute">· ${TIERN[b.tier]}</span>`:''}</div><div class="xs mute">${esc(b.d)}</div>${b.on?'':`<div class="bar" style="height:5px;margin-top:6px"><i style="width:${b.p*100}%"></i></div>`}</div>${b.on&&ROLE!='coach'?`<button class="btn sm ghost" onclick="shareBadge('${b.id}')">${I('share','sm')} Podijeli</button>`:b.on?I('check'):''}</div>`).join('')}</div></div>`)}
+/* slika za Instagram story (1080×1920) */
+async function shareBadge(id){const b=badges().find(x=>x.id==id);if(!b)return;const W=1080,H=1920,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+ try{await Promise.all(['900 200px "Big Shoulders Display"','600 44px Archivo','700 40px Archivo'].map(f=>document.fonts.load(f)))}catch(e){}
+ const bg=x.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#141311');bg.addColorStop(1,'#060605');x.fillStyle=bg;x.fillRect(0,0,W,H);
+ const gl=x.createRadialGradient(W/2,760,40,W/2,760,560);gl.addColorStop(0,'rgba(214,178,94,.28)');gl.addColorStop(1,'rgba(214,178,94,0)');x.fillStyle=gl;x.fillRect(0,0,W,H);
+ const gold=x.createLinearGradient(0,0,W,0);gold.addColorStop(0,'#a77f28');gold.addColorStop(.5,'#f0d896');gold.addColorStop(1,'#b8902f');
+ x.textAlign='center';x.fillStyle='#f1eee6';x.font='900 92px "Big Shoulders Display",sans-serif';x.fillText('K-FIT',W/2,200);
+ x.fillStyle='#9d9a90';x.font='600 40px Archivo,sans-serif';x.fillText('NOVA ZNAČKA',W/2,330);
+ const cx=W/2,cy=760,R=250;x.beginPath();x.arc(cx,cy,R,0,7);x.fillStyle='#1b1a17';x.fill();x.lineWidth=18;x.strokeStyle=b.cat?TIERC[b.tier]:'#d6b25e';x.stroke();
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="260" height="260" fill="none" stroke="#e9cf83" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${P[b.ic]||''}</svg>`;
+ await new Promise(r=>{const im=new Image();im.onload=()=>{x.drawImage(im,cx-130,cy-130,260,260);r()};im.onerror=r;im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});
+ x.fillStyle=gold;let fs=180;x.font=`900 ${fs}px "Big Shoulders Display",sans-serif`;const tt=b.t.toUpperCase();while(x.measureText(tt).width>W-120&&fs>90){fs-=8;x.font=`900 ${fs}px "Big Shoulders Display",sans-serif`}x.fillText(tt,W/2,1170);
+ x.fillStyle='#d9d6cc';x.font='500 46px Archivo,sans-serif';const words=b.d.split(' ');let line='',y=1260;words.forEach(w=>{if(x.measureText(line+w).width>W-200){x.fillText(line.trim(),W/2,y);line='';y+=62}line+=w+' '});x.fillText(line.trim(),W/2,y);
+ if(b.cat){x.fillStyle='#9d9a90';x.font='600 38px Archivo,sans-serif';x.fillText(b.ct+' · '+TIERN[b.tier],W/2,y+90)}
+ x.fillStyle='#9d9a90';x.font='600 40px Archivo,sans-serif';x.fillText('Online coaching · @kosulja98',W/2,H-150);
+ const blob=await new Promise(r=>c.toBlob(r,'image/png')),file=new File([blob],'k-fit-znacka.png',{type:'image/png'});
+ if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'K-FIT značka'})}catch(e){}return}
+ const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='k-fit-znacka.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),4000);toast('Slika je spremljena.')}
+
 function confetti(){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const c=document.createElement('canvas');c.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:70';document.body.append(c);const x=c.getContext('2d'),dpr=devicePixelRatio||1;c.width=innerWidth*dpr;c.height=innerHeight*dpr;x.scale(dpr,dpr);
  const col=[getComputedStyle(document.documentElement).getPropertyValue('--acc').trim()||'#e0975c','#5fd08a','#e8bd4f','#6fb3e8','#f08585'],P=Array.from({length:120},()=>({x:innerWidth/2,y:innerHeight*.35,vx:(Math.random()-.5)*11,vy:-Math.random()*11-3,s:4+Math.random()*5,r:Math.random()*6,c:col[Math.floor(Math.random()*col.length)]}));let t=0;
  (function f(){x.clearRect(0,0,innerWidth,innerHeight);P.forEach(p=>{p.vy+=.32;p.x+=p.vx;p.y+=p.vy;p.r+=.2;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});if(++t<110)requestAnimationFrame(f);else c.remove()})()}
