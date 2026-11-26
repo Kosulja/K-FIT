@@ -151,6 +151,7 @@ async function enter(){
  ROLE=r.role;
  if(ROLE=='coach')return coachHome();
  if(ROLE=='new')return onboardView({email:r.email});
+ if(ROLE=='client'&&r.tmp)return setPwView(r);
  if(ROLE=='client'&&r.onboarded===false)return onboardView({email:r.email,pre:r.pre});
  if(ROLE=='client'){CID=r.client_id;return loadClient()}
  if(ROLE=='unconfirmed')return infoView('Potvrdi email','Poslali smo ti link za potvrdu na email. Klikni ga pa se vrati ovdje i prijavi.');
@@ -164,6 +165,18 @@ const UDOM='@k-fit.local';
 const normUser=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().replace(/\s+/g,'.').replace(/[^a-z0-9._-]/g,'').replace(/^[._-]+/,'').slice(0,30);
 const toLogin=s=>{s=String(s||'').trim();return s.includes('@')?s.toLowerCase():normUser(s)+UDOM};
 const dispLogin=e=>String(e||'').endsWith(UDOM)?String(e).slice(0,-UDOM.length):String(e||'');
+/* prva prijava: klijent postavlja svoju lozinku umjesto privremene */
+function setPwView(r){shell(`<form class="center card stack" id="spf" style="max-width:420px">${I('lock')}<h1>Tvoja lozinka</h1><p class="mute">Dobio si privremenu lozinku od trenera. Sad postavi svoju, koju ćeš koristiti ubuduće.</p>
+<div class="card flat" style="padding:12px 14px"><div class="xs mute">Korisničko ime</div><div class="b">${esc(dispLogin(r.email||''))}</div></div>
+<label class="f">Nova lozinka<input class="inp" id="sp1" type="password" minlength="8" autocomplete="new-password" required></label>
+<label class="f">Ponovi lozinku<input class="inp" id="sp2" type="password" minlength="8" autocomplete="new-password" required></label>
+<p class="xs mute">Najmanje 8 znakova. Zapamti je ili spremi u mobitel kad te pita.</p><div id="spe" class="s" style="color:var(--bad)"></div>
+<button class="btn acc full">Spremi i nastavi</button></form>`);
+ const f=$('#spf');f.onsubmit=async e=>{e.preventDefault();const a=$('#sp1').value,b=$('#sp2').value,er=$('#spe'),bt=f.querySelector('button');
+  if(a.length<8){er.textContent='Lozinka mora imati barem 8 znakova.';return}if(a!=b){er.textContent='Lozinke se ne podudaraju.';return}
+  bt.disabled=true;const{error}=await SB.auth.updateUser({password:a,data:{tmp:false}});
+  if(error){bt.disabled=false;er.textContent=/same|different/i.test(error.message)?'Nova lozinka mora biti drukčija od privremene.':error.message;return}
+  toast('Lozinka spremljena.');enter()}}
 function pwChangeM(){const o=sheet(`<form class="stack" id="pcf">${sheetHd('Promijeni lozinku')}<label class="f">Nova lozinka<input class="inp" id="pc1" type="password" minlength="8" autocomplete="new-password" required></label><label class="f">Ponovi lozinku<input class="inp" id="pc2" type="password" minlength="8" autocomplete="new-password" required></label><div id="pce" class="s" style="color:var(--bad)"></div><button class="btn acc">Spremi</button></form>`);
  o.querySelector('#pcf').onsubmit=async e=>{e.preventDefault();const a=o.querySelector('#pc1').value,b=o.querySelector('#pc2').value,er=o.querySelector('#pce');if(a!=b){er.textContent='Lozinke se ne podudaraju.';return}
   if(DEMO){close(o);toast('U demu se lozinka ne mijenja.');return}const{error}=await SB.auth.updateUser({password:a});if(error){er.textContent=error.message;return}close(o);toast('Lozinka promijenjena.')}}
