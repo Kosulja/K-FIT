@@ -83,7 +83,7 @@ const API=DEMO?{
  async logs(c,from){return(DB().logs[c]||[]).filter(r=>r.day>=from||r.kind=='settings').sort((a,b)=>b.day.localeCompare(a.day))},
  async put(c,r){const d=DB();d.logs[c]=(d.logs[c]||[]).filter(x=>x.id!=r.id);d.logs[c].push(clone(r));save(d)},
  async del(c,id){const d=DB();d.logs[c]=(d.logs[c]||[]).filter(x=>x.id!=id);save(d)},
- async clients(){return DB().clients},async links(){return DB().links},
+ async clients(){return DB().clients},async packs(){return DB().packs||[]},async links(){return DB().links},
  async accCreate(cid,u,pw){const d=DB();if(d.links.some(l=>l.client_id==cid))throw new Error('Klijent već ima pristup.');d.links.push({client_id:cid,email:u+UDOM,created_at:new Date().toISOString()});save(d);return{username:u}},
  async accReset(cid,pw){return{}},async accRemove(cid){const d=DB();d.links=d.links.filter(l=>l.client_id!=cid);save(d);return{ok:true}},
  async activity(from){const d=DB(),o={};Object.entries(d.logs).forEach(([c,L])=>L.filter(r=>r.day>=from).forEach(r=>(o[c]=o[c]||[]).push(r)));return o},
@@ -102,7 +102,8 @@ const API=DEMO?{
  async logs(c,from){const out=[];for(let f=0;;f+=1000){const{data,error}=await SB.from('kfit_logs').select('id,kind,day,data').eq('client_id',c).or(`day.gte.${from},kind.eq.settings`).order('day',{ascending:false}).range(f,f+999);if(error)throw error;out.push(...data);if(data.length<1000)break}return out},
  async put(c,r){const{error}=await SB.from('kfit_logs').upsert({client_id:c,id:r.id,kind:r.kind,day:r.day,data:r.data,updated_at:new Date().toISOString()});if(error)throw error},
  async del(c,id){const{error}=await SB.from('kfit_logs').delete().eq('client_id',c).eq('id',id);if(error)throw error},
- async clients(){const{data,error}=await SB.from('kdocs').select('id,data').eq('col','clients');if(error)throw error;return data.filter(r=>!r.data.ar).map(r=>({id:r.id,...r.data}))},
+ async packs(){const{data,error}=await SB.from('kdocs').select('data').eq('col','packs');if(error)throw error;return data.map(r=>r.data)},
+async clients(){const{data,error}=await SB.from('kdocs').select('id,data').eq('col','clients');if(error)throw error;return data.filter(r=>!r.data.ar).map(r=>({id:r.id,...r.data}))},
  async links(){const{data,error}=await SB.from('kfit_links').select('client_id,email,created_at');if(error)throw error;return data},
  async accCreate(cid,uname,pw){const{data,error}=await SB.rpc('kfit_acc_create',{cid,uname,pw});if(error)throw error;return data},
  async accReset(cid,pw){const{data,error}=await SB.rpc('kfit_acc_reset',{cid,pw});if(error)throw error;return data},
@@ -151,13 +152,21 @@ async function enter(){
  ROLE=r.role;
  if(ROLE=='coach')return coachHome();
  if(ROLE=='new')return onboardView({email:r.email});
+ if(ROLE=='expired')return expiredView(r);
  if(ROLE=='client'&&r.tmp)return setPwView(r);
  if(ROLE=='client'&&r.onboarded===false)return onboardView({email:r.email,pre:r.pre});
- if(ROLE=='client'){CID=r.client_id;return loadClient()}
+ if(ROLE=='client'){CID=r.client_id;UNTIL=r.until||null;return loadClient()}
  if(ROLE=='unconfirmed')return infoView('Potvrdi email','Poslali smo ti link za potvrdu na email. Klikni ga pa se vrati ovdje i prijavi.');
  if(ROLE=='none')return infoView('Račun još nije povezan',`Tvoj račun (<b>${esc(r.email)}</b>) još nije povezan s programom. Javi se treneru da upiše ovaj email u tvoj profil, a onda se samo ponovno prijavi.`);
  loginView();
 }
+let UNTIL=null;
+/* istek paketa: podsjetnik 7 dana i 1 dan prije, na dan isteka pristup se zatvara (pravilo je u bazi) */
+function expiredView(r){shell(`<div class="center card stack" style="max-width:440px">${I('clock')}<h1>Paket je istekao</h1><p class="mute">${r.f?esc(r.f)+', t':'T'}voj paket${r.ended?' je istekao '+fmt(r.ended):' nije aktivan'}, pa je pristup aplikaciji zatvoren. Tvoji podaci i napredak ostaju sačuvani.</p><p class="mute">Za nastavak suradnje javi se treneru. Čim produžiš paket, pristup se otvara sam.</p><a class="btn acc full" href="${CFG.ig}" target="_blank" rel="noopener">${I('msg')} Javi se treneru</a><button class="btn ghost full" onclick="enter()">Provjeri ponovno</button><button class="btn ghost full" onclick="logout()">Odjava</button></div>`)}
+function expiryCard(){if(!UNTIL||DEMO)return'';const d=daysTo(UNTIL);if(d>7||d<1)return'';
+ const t=d==1?`Paket ti ističe <b>sutra</b>. Od ${fmt(UNTIL)} pristup aplikaciji se zatvara dok ne produžiš suradnju.`:`Paket ti ističe za <b>${d} dana</b> (${fmt(UNTIL)}). Ako želiš nastaviti, javi se treneru za produženje.`;
+ const k='kfitk-exp-'+UNTIL+'-'+d;if((d==7||d==1)&&!LS.get(k,0)){LS.set(k,1);after(()=>sheet(`<div class="stack">${sheetHd(d==1?'Paket ističe sutra':'Paket ističe za tjedan dana')}<p>${t}</p><a class="btn acc full" href="${CFG.ig}" target="_blank" rel="noopener">${I('msg')} Javi se treneru</a><button class="btn ghost full" data-x>U redu</button></div>`))}
+ return `<div class="card" style="border-color:${d<=1?'var(--bad)':'var(--warn)'}"><div class="row" style="align-items:flex-start">${I('clock')}<div style="flex:1"><p style="margin:0">${t}</p><a class="btn sm ghost" style="margin-top:10px" href="${CFG.ig}" target="_blank" rel="noopener">${I('msg')} Javi se treneru</a></div></div></div>`}
 function infoView(t,m){shell(`<div class="center card stack">${I('user')}<h1>${t}</h1><p class="mute">${m}</p><a class="btn ghost" href="${CFG.ig}" target="_blank" rel="noopener">${I('msg')} Javi se na Instagramu</a><button class="btn" onclick="enter()">Pokušaj ponovno</button><button class="btn ghost" onclick="logout()">${I('out')} Odjava</button></div>`)}
 let AUTHMODE='in';
 /* korisničko ime → interni email (trener otvara račun bez emaila) */
@@ -235,6 +244,7 @@ function homeView(){const c=(ME&&ME.client)||{},h=new Date().getHours(),hi=h<11?
  else if((PROG.days||[]).length)tw=`<div class="kick">Danas</div><h2 style="margin-top:4px">Dan odmora</h2><p class="s mute">Šetnja, istezanje i dovoljno vode.${T.next?' Sljedeće: <b>'+esc(T.next.day.name)+'</b> ('+WD[wdi(T.next.date)]+')':''}</p><button class="btn ghost full" style="margin-top:12px" onclick="go('train')">Ipak treniraj ili premjesti trening</button>`;
  else tw=`<div class="kick">Program</div><h2 style="margin-top:4px">Uskoro stiže</h2><p class="s mute">Trener ti priprema program. Do tada možeš pratiti vodu, korake i težinu.</p>`;
  return `<div class="stack">
+${expiryCard()}
 <div><div class="kick">${new Date().toLocaleDateString('hr-HR',{weekday:'long',day:'numeric',month:'long'}).replace(/^./,x=>x.toUpperCase())}</div><h1 style="margin-top:4px">${hi}${c.f?', '+esc(c.f):''}</h1></div>
 ${PROG.msg?`<div class="card hero"><div class="row" style="align-items:flex-start">${I('msg')}<div><div class="kick" style="color:var(--acc)">Poruka trenera</div><p style="margin-top:4px;white-space:pre-line">${esc(PROG.msg)}</p></div></div></div>`:''}
 <div class="card ${T.day&&!T.done?'hero':''}">${tw}</div>
