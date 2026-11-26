@@ -5,7 +5,7 @@
 const ALC=['Ne pijem','Rijetko (par puta mjesečno)','Vikendom','Više puta tjedno','Svaki dan'];
 const TPW=['0','1','2','3','4','5','6+'];
 const QF=[
- ['O tebi',[['f','Ime','text',1],['l','Prezime','text',1],['em','Email','email'],['tel','Broj telefona','tel',1],['bd','Datum rođenja','date',1],['loc','Lokacija / mjesto prebivališta','text',1]]],
+ ['O tebi',[['f','Ime','text',1],['l','Prezime','text',1],['em','Email','email'],['tel','Broj telefona','tel',1],['bd','Datum rođenja','date',1],['loc','Adresa (ulica i broj, poštanski broj, mjesto)','text',1,'Npr. Ulica 12, 51250 Novi Vinodolski']]],
  ['Tijelo i cilj',[['age','Dob','age'],['h','Visina (cm)','num',1],['kg','Težina (kg)','num',1],['goal','Cilj','area',1,'Npr. skinuti 8 kg do ljeta, ojačati leđa, pripremiti se za utrku…'],['inj','Imaš li kakve ozljede ili ograničenja?','area',0,'Npr. operirano koljeno, bol u donjim leđima… Ako nemaš, napiši „nemam”.']]],
  ['Mjere',[['waist','Struk (cm)','num'],['belly','Trbuh (cm)','num'],['hips','Bokovi (cm)','num'],['thigh','Bedro (cm)','num'],['arm','Ruka (cm)','num']],'Mjeri ujutro, prije doručka. Metar drži ravno i ne stišći. <b>Struk</b> – najuži dio trupa · <b>Trbuh</b> – u visini pupka · <b>Bokovi</b> – najširi dio stražnjice · <b>Bedro</b> – najširi dio desne noge · <b>Ruka</b> – sredina desne nadlaktice, opuštena. Nemaš metar? Ostavi prazno i pošalji kasnije.'],
  ['Prehrana i navike',[['meals','Koliko obroka dnevno jedeš?','num',1],['kcal','Koliko kalorija dnevno, otprilike?','num',0,'Ako ne znaš, ostavi prazno'],['sup','Suplementi, lijekovi ili sl.','area',0,'Npr. protein, kreatin, vitamin D…'],['alc','Piješ li alkohol, koliko često?','pick',1,ALC],['sleep','Koliko sati spavaš?','num',1],['stress','Razina stresa (1–10)','scale',1]]],

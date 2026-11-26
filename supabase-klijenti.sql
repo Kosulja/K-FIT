@@ -171,7 +171,7 @@ begin
   select data into d from public.kdocs where col = 'clients' and id = cid;
   return json_build_object('role','client','client_id',cid,'email',em,
     'onboarded', coalesce(d ? 'upitnik', false),
-    'pre', jsonb_build_object('f',d->>'f','l',d->>'l','tel',d->>'tel','bd',d->>'bd','goal',d->>'goal'));
+    'pre', jsonb_build_object('f',d->>'f','l',d->>'l','tel',d->>'tel','bd',d->>'bd','goal',d->>'goal','loc',d->>'adr'));
 end $$;
 
 create or replace function public.kfit_onboard(q jsonb) returns json
@@ -211,14 +211,15 @@ begin
     isnew := true;
     if cid is null then cid := 'a' || substr(md5(random()::text || clock_timestamp()::text), 1, 8); end if;
     d := jsonb_build_object('id',cid,'f',clean->>'f','l',coalesce(clean->>'l',''),'tel',coalesce(clean->>'tel',''),
-      'em',em,'bd',coalesce(clean->>'bd',''),'sd',dt,'sv','Online coaching','goal',coalesce(clean->>'goal',''),
+      'em',em,'adr',coalesce(clean->>'loc',''),'bd',coalesce(clean->>'bd',''),'sd',dt,'sv','Online coaching','goal',coalesce(clean->>'goal',''),
       'st','Aktivan','photo','','notes','[]'::jsonb);
   else
     -- postojeći klijent: popuni samo prazna polja, trenerove podatke ne diraj
     d := d || jsonb_strip_nulls(jsonb_build_object(
       'tel',  case when coalesce(d->>'tel','')  = '' then clean->>'tel'  end,
       'bd',   case when coalesce(d->>'bd','')   = '' then clean->>'bd'   end,
-      'goal', case when coalesce(d->>'goal','') = '' then clean->>'goal' end));
+      'goal', case when coalesce(d->>'goal','') = '' then clean->>'goal' end,
+      'adr',  case when coalesce(d->>'adr','')  = '' then clean->>'loc'  end));
   end if;
   d := d || jsonb_build_object('upitnik', clean, 'notes',
     coalesce(d->'notes','[]'::jsonb) || jsonb_build_array(jsonb_build_object('ts', ts,
