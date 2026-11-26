@@ -238,6 +238,20 @@ main{padding-top:10px;padding-bottom:calc(118px + env(safe-area-inset-bottom,0px
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 details.warm summary{cursor:pointer;list-style:none}details.warm summary::-webkit-details-marker{display:none}details.warm{border-color:color-mix(in srgb,var(--acc) 30%,var(--line))}
 [hidden]{display:none!important}
+
+/* iPhone: polja 16px (iOS inače zumira), krupniji sitni tekst i više zraka */
+input,select,textarea,.inp,label.f .inp,.sets .inp{font-size:16px!important}
+body{font-size:16px;line-height:1.5}
+.xs{font-size:13px}.s{font-size:14.5px}.kick{font-size:12px}
+.chip{font-size:13px;padding:4px 10px}button.chip{min-height:36px;font-size:14px}
+label.f{font-size:13px;gap:6px}
+#tabs button{font-size:12px;padding:8px 0}
+.card{padding:18px;border-radius:18px}.ex{padding:16px}
+.stack{gap:14px}.list>*{padding:14px 0}
+.sets{grid-template-columns:30px 1fr 1fr 44px;gap:8px}.sets .inp{min-height:44px}.ok-btn{width:44px;height:44px}
+.sets .h,.sets .rs,.week .d .wn,.week .pill{font-size:12px}.sets .n{font-size:14px}
+.why{font-size:13px}.empty{font-size:15px}
+.btn.sm{min-height:40px;font-size:15px}.btn.sm.icon{width:40px}
 </style>
 </head>
 <body>
