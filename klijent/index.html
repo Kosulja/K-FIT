@@ -252,6 +252,34 @@ label.f{font-size:13px;gap:6px}
 .sets .h,.sets .rs,.week .d .wn,.week .pill{font-size:12px}.sets .n{font-size:14px}
 .why{font-size:13px}.empty{font-size:15px}
 .btn.sm{min-height:40px;font-size:15px}.btn.sm.icon{width:40px}
+
+/* ============ K-FIT izgled: crno-zlatni brend, ravne površine, jasna hijerarhija ============ */
+:root{--bg:#0c0c0b;--card:#151513;--soft:#1f1e1b;--line:#2b2a26;--ink:#efede6;--mute:#9d9a90;--r-lg:14px;--r-md:10px}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f3f3f1;--card:#fff;--soft:#ecebe7;--line:#e1e0db;--ink:#18181a;--mute:#696760}}
+:root[data-theme="light"]{--bg:#f3f3f1;--card:#fff;--soft:#ecebe7;--line:#e1e0db;--ink:#18181a;--mute:#696760}
+:root{--acc-soft:color-mix(in srgb,var(--acc) 13%,var(--card));--acc-mid:color-mix(in srgb,var(--acc) 40%,var(--card))}
+.card{border-radius:var(--r-lg);border-color:var(--line);box-shadow:none}
+.card.flat,.exed{border-radius:var(--r-md)}
+.hero{background:var(--card);border-color:var(--acc-mid)}
+.btn,.btn.sm,.inp,.ok-btn,.slip,.badge,#toast,.seg{border-radius:var(--r-md)}
+.seg button{border-radius:7px}
+.btn.acc{box-shadow:none}
+.btn.acc:active{background:color-mix(in srgb,var(--acc) 85%,#000)}
+.chip,button.chip{border-radius:7px}
+.av{border-radius:10px}.thumb{border-radius:8px}
+.inp:focus{box-shadow:none;border-color:var(--acc)}
+.sheet{border-radius:16px 16px 0 0}
+@media(min-width:700px){.sheet{border-radius:16px}}
+#tabs{left:0;right:0;bottom:0;padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px));border:0;border-top:1px solid var(--line);border-radius:0;background:color-mix(in srgb,var(--card) 94%,transparent);box-shadow:none}
+#tabs button{border-radius:0;padding:7px 0 5px}
+#tabs button.on{background:none;color:var(--acc)}
+main{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+#toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+#rest{bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+.brand{letter-spacing:.02em}
+.bar,.bar i{border-radius:3px}
+.week .d{border-radius:8px}.week .pill{border-radius:6px}
+details.warm{border-color:var(--line)}
 </style>
 </head>
 <body>

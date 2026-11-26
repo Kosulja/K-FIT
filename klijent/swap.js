@@ -38,7 +38,7 @@ function swapOptions(orig){if(!LIB)return[];const o=libGet(orig.lib)||{n:orig.n,
 /* izmjena = zamijenjena vježba ili premještena vježba/superset (superset se broji kao jedna) */
 const swBudget=dr=>Math.max(1,Math.round(dr.ex.length*SW_SHARE)),swUsed=dr=>{const g=new Set();dr.ex.forEach(e=>{if(e.swapFrom)g.add('s'+e.id);if(e.moved)g.add('m'+(e.ss||e.id))});return g.size};
 async function swapM(ei){const dr=getDr(),e=dr.ex[ei];if(!e)return;
- if(e.type=='cardio'?e.cardio.ok:e.sets.some(x=>x.ok)){toast('Vježba je već započeta — zamjena je moguća samo prije prve serije.');return}
+ if(e.type=='cardio'?e.cardio.ok:e.sets.some(x=>x.ok)){toast('Vježba je već započeta, zamjena je moguća samo prije prve serije.');return}
  const used=swUsed(dr),max=swBudget(dr),left=max-used;
  const o=sheet(`<div class="stack">${sheetHd('Nema sprave?')}<p class="s mute">${esc(exName(e))}</p><div class="empty">Tražim zamjene…</div></div>`);
  try{await loadLib()}catch(x){o.querySelector('.empty').textContent='Baza vježbi se ne može učitati bez interneta. Možeš je odraditi kasnije.'}
@@ -46,8 +46,8 @@ async function swapM(ei){const dr=getDr(),e=dr.ex[ei];if(!e)return;
  const item=c=>`<button class="tap" data-sw="${esc(c.x.id)}">${thumb(c.x.id)}<div style="flex:1;min-width:0"><div class="b s ell">${esc(libN(c.x))}</div><div class="xs mute ell">${esc(c.why)}</div></div><span class="btn sm">Zamijeni</span></button>`;
  o.querySelector('.sheet').innerHTML=`<div class="stack">${sheetHd('Nema sprave?')}
 <div class="between"><p class="s mute" style="min-width:0">${esc(exName(e))}${e.swapFrom?` · <span class="xs">zamjena za ${esc(exName({lib:e.swapFrom.lib,n:e.swapFrom.n}))}</span>`:''}</p><span class="chip ${left>0?'':'bad'}">izmjene ${used}/${max}</span></div>
-${left<=0&&!e.swapFrom?`<div class="card flat" style="padding:12px;border-color:var(--warn)"><p class="s">Iskoristio si sve izmjene za ovaj trening (${max}). Trening treba ostati onakav kakav je trener složio — ako baš ne ide, odradi što možeš i javi treneru u bilješci.</p></div>`:`
-${notLast&&!e.moved&&left>0?`<button class="card tap" data-later>${I('clock')}<div style="flex:1"><div class="b">Sprava je zauzeta — odradi kasnije</div><p class="xs mute">Vježba ide na kraj treninga, ostalo ostaje isto.</p></div>${I('chev','sm')}</button>`:''}
+${left<=0&&!e.swapFrom?`<div class="card flat" style="padding:12px;border-color:var(--warn)"><p class="s">Iskoristio si sve izmjene za ovaj trening (${max}). Trening treba ostati onakav kakav je trener složio. Ako baš ne ide, odradi što možeš i javi treneru u bilješci.</p></div>`:`
+${notLast&&!e.moved&&left>0?`<button class="card tap" data-later>${I('clock')}<div style="flex:1"><div class="b">Sprava je zauzeta, odradi kasnije</div><p class="xs mute">Vježba ide na kraj treninga, ostalo ostaje isto.</p></div>${I('chev','sm')}</button>`:''}
 <div><div class="kick" style="margin-bottom:8px">Najbliža zamjena · isti pokret i kut</div>${t1.length?`<div class="list">${t1.map(item).join('')}</div>`:'<p class="s mute">Nema iste vježbe s drugom opremom.</p>'}</div>
 ${t2.length?`<div><div class="kick" style="margin-bottom:8px">Ako ni to ne ide · isti mišići, isti kut</div><div class="list">${t2.map(item).join('')}</div></div>`:''}
 ${t3.length?`<div><div class="kick" style="margin-bottom:8px">Zadnja opcija · isti pokret, drugi kut</div><div class="list">${t3.map(item).join('')}</div></div>`:''}

@@ -47,10 +47,10 @@ const I=(n,c='')=>`<svg class="ic ${c}" viewBox="0 0 24 24" aria-hidden="true">$
 let T0;function toast(m,ms){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(T0);T0=setTimeout(()=>t.classList.remove('on'),ms||2400)}
 
 /* ============ POSTAVKE, TEME ============ */
-const ACC={bakar:['#e0975c','#b4622a'],crvena:['#f07a6a','#c0392b'],narancasta:['#f59e42','#c2610c'],zlatna:['#e8c35a','#9a7400'],zelena:['#5fd08a','#15803d'],tirkiz:['#4fd1c5','#0f766e'],plava:['#6fa8f5','#1d5fc4'],ljubicasta:['#b18cf5','#6d3fd1']};
-const ACCN={bakar:'Bakar',crvena:'Crvena',narancasta:'Narančasta',zlatna:'Zlatna',zelena:'Zelena',tirkiz:'Tirkizna',plava:'Plava',ljubicasta:'Ljubičasta'};
-const DEF_SET={lang:null,goalKg:null,effort:'rir',wake:true,theme:'auto',acc:'bakar',fig:'m',notif:false};
-function applyTheme(s){const r=document.documentElement;if(!s.theme||s.theme=='auto')r.removeAttribute('data-theme');else r.dataset.theme=s.theme;const a=ACC[s.acc]||ACC.bakar;r.style.setProperty('--acc-d',a[0]);r.style.setProperty('--acc-l',a[1]);
+const ACC={kfit:['#c9a54e','#86671d'],bakar:['#e0975c','#b4622a'],crvena:['#f07a6a','#c0392b'],narancasta:['#f59e42','#c2610c'],zlatna:['#e8c35a','#9a7400'],zelena:['#5fd08a','#15803d'],tirkiz:['#4fd1c5','#0f766e'],plava:['#6fa8f5','#1d5fc4'],ljubicasta:['#b18cf5','#6d3fd1']};
+const ACCN={kfit:'K-FIT zlatna',bakar:'Bakar',crvena:'Crvena',narancasta:'Narančasta',zlatna:'Zlatna',zelena:'Zelena',tirkiz:'Tirkizna',plava:'Plava',ljubicasta:'Ljubičasta'};
+const DEF_SET={lang:null,goalKg:null,effort:'rir',wake:true,theme:'auto',acc:'kfit',fig:'m',notif:false};
+function applyTheme(s){const r=document.documentElement;if(!s.theme||s.theme=='auto')r.removeAttribute('data-theme');else r.dataset.theme=s.theme;const a=ACC[s.acc]||ACC.kfit;r.style.setProperty('--acc-d',a[0]);r.style.setProperty('--acc-l',a[1]);
  setTimeout(()=>{const m=document.querySelector('meta[name=theme-color]');if(m)m.content=getComputedStyle(document.body).backgroundColor},0)}
 applyTheme(LS.get('kfitk-theme',{}));
 
@@ -126,7 +126,7 @@ const save=d=>{MEMDB=d;LS.set('kfitk-demo6',d)};
 /* — spremanje s redom čekanja (teretana bez signala) — */
 let OUT=LS.get('kfitk-out',{});
 async function put(r){r.data=r.data||{};const i=LOGS.findIndex(x=>x.id==r.id);if(i>=0)LOGS[i]=r;else LOGS.unshift(r);
- try{await API.put(CID,r);delete OUT[r.id]}catch(e){OUT[r.id]={c:CID,r};toast('Spremljeno na mobitel — poslat ću kad bude interneta.')}LS.set('kfitk-out',OUT)}
+ try{await API.put(CID,r);delete OUT[r.id]}catch(e){OUT[r.id]={c:CID,r};toast('Spremljeno na mobitel. Poslat ću kad bude interneta.')}LS.set('kfitk-out',OUT)}
 async function delLog(id){LOGS=LOGS.filter(x=>x.id!=id);delete OUT[id];LS.set('kfitk-out',OUT);try{await API.del(CID,id)}catch(e){}}
 async function flush(){for(const[k,v]of Object.entries(OUT)){try{await API.put(v.c,v.r);delete OUT[k]}catch(e){break}}LS.set('kfitk-out',OUT)}
 window.addEventListener('online',flush);
@@ -138,7 +138,7 @@ const workouts=(L=LOGS)=>byKind('workout',L).sort((a,b)=>a.day.localeCompare(b.d
 
 /* ============ PRIJAVA ============ */
 const app=$('#app');
-function shell(inner,tabs){app.innerHTML=(DEMO?`<div class="demo-banner">DEMO — izmišljeni podaci, spremaju se samo u ovom pregledniku ${PREVIEW?'':'· <button class="b" style="text-decoration:underline" onclick="exitDemo()">Izađi</button>'} · <button class="b" style="text-decoration:underline" onclick="resetDemo()">Resetiraj</button></div>`:'')+
+function shell(inner,tabs){app.innerHTML=(DEMO?`<div class="demo-banner">Demo: izmišljeni podaci, spremaju se samo u ovom pregledniku ${PREVIEW?'':'· <button class="b" style="text-decoration:underline" onclick="exitDemo()">Izađi</button>'} · <button class="b" style="text-decoration:underline" onclick="resetDemo()">Resetiraj</button></div>`:'')+
 `<header id="top"><div class="brand">K<b>-</b>FIT</div><span class="chip ${ROLE=='coach'?'acc':''}">${ROLE=='coach'?'Trener':'Klijent'}</span><div class="sp"></div>${DEMO?`<button class="btn sm ghost" onclick="demoSwitch()">${ROLE=='coach'?'Kao klijent':'Kao trener'}</button>`:''}</header><main id="main">${inner}</main>${tabs||''}`;afterRender()}
 function exitDemo(){LS.set('kfitk-demo-on',false);location.href=location.pathname}
 function resetDemo(){LS.del('kfitk-demo6');LS.del(DK);MEMDB=null;if(PREVIEW){VIEW='home';return enter()}location.reload()}
@@ -154,7 +154,7 @@ async function enter(){
  if(ROLE=='client'&&r.onboarded===false)return onboardView({email:r.email,pre:r.pre});
  if(ROLE=='client'){CID=r.client_id;return loadClient()}
  if(ROLE=='unconfirmed')return infoView('Potvrdi email','Poslali smo ti link za potvrdu na email. Klikni ga pa se vrati ovdje i prijavi.');
- if(ROLE=='none')return infoView('Račun još nije povezan',`Tvoj račun (<b>${esc(r.email)}</b>) još nije povezan s programom. Javi se treneru da upiše ovaj email u tvoj profil — nakon toga se samo ponovno prijavi.`);
+ if(ROLE=='none')return infoView('Račun još nije povezan',`Tvoj račun (<b>${esc(r.email)}</b>) još nije povezan s programom. Javi se treneru da upiše ovaj email u tvoj profil, a onda se samo ponovno prijavi.`);
  loginView();
 }
 function infoView(t,m){shell(`<div class="center card stack">${I('user')}<h1>${t}</h1><p class="mute">${m}</p><a class="btn ghost" href="${CFG.ig}" target="_blank" rel="noopener">${I('msg')} Javi se na Instagramu</a><button class="btn" onclick="enter()">Pokušaj ponovno</button><button class="btn ghost" onclick="logout()">${I('out')} Odjava</button></div>`)}
@@ -169,7 +169,7 @@ function pwChangeM(){const o=sheet(`<form class="stack" id="pcf">${sheetHd('Prom
   if(DEMO){close(o);toast('U demu se lozinka ne mijenja.');return}const{error}=await SB.auth.updateUser({password:a});if(error){er.textContent=error.message;return}close(o);toast('Lozinka promijenjena.')}}
 function loginView(msg){ROLE=null;const m={in:T('Prijavi se','Sign in'),up:T('Napravi račun','Create account'),re:T('Pošalji link','Send link')}[AUTHMODE];
 app.innerHTML=`<div style="padding:16px"><form id="lg" class="center card stack" autocomplete="on">
-<div class="between"><div class="brand" style="font-size:30px">K<b>-</b>FIT</div>${langSeg()}</div><p class="mute s">${T('Tvoj program, treninzi i napredak — na jednom mjestu.','Your program, workouts and progress — all in one place.')}</p><p class="xs mute" style="margin-top:-6px">${T('Jezik naziva vježbi možeš promijeniti i kasnije u postavkama.','You can change the exercise name language later in settings.')}</p>
+<div class="between"><div class="brand" style="font-size:30px">K<b>-</b>FIT</div>${langSeg()}</div><p class="mute s">${T('Tvoj program, treninzi i napredak na jednom mjestu.','Your program, workouts and progress in one place.')}</p><p class="xs mute" style="margin-top:-6px">${T('Jezik naziva vježbi možeš promijeniti i kasnije u postavkama.','You can change the exercise name language later in settings.')}</p>
 <div class="seg"><button type="button" class="${AUTHMODE=='in'?'on':''}" onclick="AUTHMODE='in';loginView()">${T('Prijava','Sign in')}</button><button type="button" class="${AUTHMODE=='up'?'on':''}" onclick="AUTHMODE='up';loginView()">${T('Registracija','Sign up')}</button></div>
 ${AUTHMODE=='up'?`<p class="xs mute">${T('Već treniraš s trenerom? Koristi <b>isti email</b> koji si mu dao. Novi si? Nakon potvrde emaila ispunjavaš kratki upitnik i tvoj profil se kreira sam.','Already training with the coach? Use the <b>same email</b> you gave him. New here? After confirming your email you fill in a short questionnaire and your profile is created automatically.')}</p>`:''}
 <label class="f">${AUTHMODE=='in'?T('Korisničko ime ili email','Username or email'):'Email'}<input class="inp" id="lem" type="${AUTHMODE=='in'?'text':'email'}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" required></label>
@@ -182,8 +182,8 @@ $('#lg').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('b
  if(!SB){err.textContent='Nema veze s bazom.';return}b.disabled=true;err.textContent='';
  try{if(AUTHMODE=='in'){const{error}=await SB.auth.signInWithPassword({email:em,password:pw});if(error)throw error;enter()}
  else if(AUTHMODE=='up'){const{data,error}=await SB.auth.signUp({email:em,password:pw,options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;if(data.session)enter();else infoView(T('Provjeri email','Check your email'),T('Poslali smo link za potvrdu na <b>','We sent a confirmation link to <b>')+esc(em)+T('</b>. Nakon potvrde se prijavi ovdje.','</b>. After confirming, sign in here.'))}
- else{if(em.endsWith(UDOM))throw new Error(T('Za korisničko ime novu lozinku ti daje trener — javi mu se.','For a username login, your coach sets a new password — contact him.'));const{error}=await SB.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});if(error)throw error;err.style.color='var(--ok)';err.textContent=T('Link za novu lozinku je poslan na email.','A password reset link has been sent to your email.')}}
- catch(x){err.textContent=/Invalid login/i.test(x.message)?T('Pogrešno korisničko ime/email ili lozinka.','Wrong username/email or password.'):/registered/i.test(x.message)?T('Taj email već ima račun — prijavi se.','That email already has an account — sign in.'):x.message}b.disabled=false}}
+ else{if(em.endsWith(UDOM))throw new Error(T('Za korisničko ime novu lozinku ti daje trener. Javi mu se.','For a username login, your coach sets a new password. Contact him.'));const{error}=await SB.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});if(error)throw error;err.style.color='var(--ok)';err.textContent=T('Link za novu lozinku je poslan na email.','A password reset link has been sent to your email.')}}
+ catch(x){err.textContent=/Invalid login/i.test(x.message)?T('Pogrešno korisničko ime/email ili lozinka.','Wrong username/email or password.'):/registered/i.test(x.message)?T('Taj email već ima račun. Prijavi se.','That email already has an account. Sign in.'):x.message}b.disabled=false}}
 function newPwView(){app.innerHTML=`<div style="padding:16px"><form id="np" class="center card stack"><h1>Nova lozinka</h1><label class="f">Nova lozinka<input class="inp" id="npw" type="password" minlength="8" autocomplete="new-password" required></label><div id="nerr" class="s" style="color:var(--bad)"></div><button class="btn acc">Spremi</button></form></div>`;
 $('#np').onsubmit=async e=>{e.preventDefault();const{error}=await SB.auth.updateUser({password:$('#npw').value});if(error){$('#nerr').textContent=error.message;return}history.replaceState(null,'',location.pathname);toast('Lozinka promijenjena.');enter()}}
 async function logout(){if(DEMO)return exitDemo();await SB.auth.signOut();AUTHMODE='in';loginView()}
@@ -218,11 +218,11 @@ function homeView(){const c=(ME&&ME.client)||{},h=new Date().getHours(),hi=h<11?
  const ciDue=!byKind('checkin').some(r=>r.day>=addD(today(),-6));
  let tw;
  if(T.done)tw=`<div class="between"><div style="min-width:0"><div class="kick">Današnji trening</div><h2 style="margin-top:4px">${esc(T.done.data.name)}</h2><p class="s mute">${T.done.data.dur||'—'} min · ${vol(T.done).toLocaleString('hr-HR')} kg${(T.done.data.prs||[]).length?' · <span class="pr">'+T.done.data.prs.length+' PR</span>':''}</p></div><span class="chip ok">${I('check','sm')} Gotovo</span></div>`;
- else if(T.day)tw=`<div class="kick">Današnji trening${T.moved?' · premješten':''}</div><h2 style="margin:4px 0 2px">${esc(T.day.name)}</h2><p class="s mute">${T.day.ex.length} vježbi · ${T.day.ex.reduce((s,e)=>s+(+e.s||1),0)} serija · ~${estMin(T.day)} min</p><button class="btn acc full" style="margin-top:12px" onclick="startW('${T.day.id}')">${I('play')} Kreni s treningom</button>`;
+ else if(T.day)tw=`<div class="kick">Današnji trening${T.moved?' · premješten':''}</div><h2 style="margin:4px 0 2px">${esc(T.day.name)}</h2><p class="s mute">${T.day.ex.length} vježbi, ${T.day.ex.reduce((s,e)=>s+(+e.s||1),0)} serija, oko ${estMin(T.day)} min</p><button class="btn acc full" style="margin-top:12px" onclick="startW('${T.day.id}')">${I('play')} Kreni s treningom</button>`;
  else if((PROG.days||[]).length)tw=`<div class="kick">Danas</div><h2 style="margin-top:4px">Dan odmora</h2><p class="s mute">Šetnja, istezanje i dovoljno vode.${T.next?' Sljedeće: <b>'+esc(T.next.day.name)+'</b> ('+WD[wdi(T.next.date)]+')':''}</p><button class="btn ghost full" style="margin-top:12px" onclick="go('train')">Ipak treniraj ili premjesti trening</button>`;
  else tw=`<div class="kick">Program</div><h2 style="margin-top:4px">Uskoro stiže</h2><p class="s mute">Trener ti priprema program. Do tada možeš pratiti vodu, korake i težinu.</p>`;
  return `<div class="stack">
-<div><div class="kick">${WD[wdi(today())]} · ${fmt(today())}</div><h1 style="margin-top:4px">${hi}${c.f?', '+esc(c.f):''}</h1></div>
+<div><div class="kick">${new Date().toLocaleDateString('hr-HR',{weekday:'long',day:'numeric',month:'long'}).replace(/^./,x=>x.toUpperCase())}</div><h1 style="margin-top:4px">${hi}${c.f?', '+esc(c.f):''}</h1></div>
 ${PROG.msg?`<div class="card hero"><div class="row" style="align-items:flex-start">${I('msg')}<div><div class="kick" style="color:var(--acc)">Poruka trenera</div><p style="margin-top:4px;white-space:pre-line">${esc(PROG.msg)}</p></div></div></div>`:''}
 <div class="card ${T.day&&!T.done?'hero':''}">${tw}</div>
 ${foodCard()}
@@ -235,7 +235,7 @@ ${slipsCard()}
 ${nx?`<div class="card"><div class="row">${I('cal')}<div style="flex:1"><div class="kick">Sljedeći trening s trenerom</div><p class="b" style="margin-top:2px">${WD[wdi(nx.d)]} ${fmt(nx.d)} · ${esc(nx.tm||'')}</p></div><span class="chip">${daysTo(nx.d)==0?'danas':daysTo(nx.d)==1?'sutra':'za '+daysTo(nx.d)+' d'}</span></div></div>`:''}
 ${(PROG.days||[]).length?challengeCard():''}
 ${photosCard()}
-${ciDue?`<button class="card tap" onclick="checkinM()">${I('heart')}<div style="flex:1"><div class="b">Tjedni check-in</div><p class="s mute">2 minute — san, energija, apetit, bilješka za trenera</p></div>${I('chev')}</button>`:''}
+${ciDue?`<button class="card tap" onclick="checkinM()">${I('heart')}<div style="flex:1"><div class="b">Tjedni check-in</div><p class="s mute">2 minute: san, energija, apetit, bilješka za trenera</p></div>${I('chev')}</button>`:''}
 </div>`}
 function goalLine(){const s=setts(),w=lastW();if(!w)return'';if(s.goalKg){const d=+w.data.kg-s.goalKg;return Math.abs(d)<.05?'cilj postignut!':'do cilja '+n1(Math.abs(d))+' kg'}return w.day==today()?'danas':fmt(w.day)}
 function statCard(i,l,v,sub,fn){return `<button class="card tap" style="display:block" onclick="${fn}"><div class="between"><span class="kick">${l}</span>${I(i,'sm')}</div><div class="big" style="margin-top:8px;font-size:28px">${v==null?'<span class="mute">—</span>':typeof v=='number'?v.toLocaleString('hr-HR'):v}</div><p class="xs mute" style="margin-top:2px">${sub?sub+' · ':''}<span style="color:var(--acc)">upiši</span></p></button>`}
@@ -280,8 +280,8 @@ ${TR.length?`<div class="card"><h3 style="margin-bottom:10px">Zakazani treninzi 
 ${old.length?`<details class="card"><summary class="b s">Prijašnji paketi (${old.length})</summary><div class="list" style="margin-top:10px">${old.map(k=>`<div class="between s"><span>${esc(k.n)}</span><span class="mute">${fmt(k.s)} – ${fmt(k.e)}</span></div>`).join('')}</div></details>`:''}
 <h2 style="margin-top:6px">Postavke</h2>
 <div class="card"><div class="list">
-${DEMO?`<div class="between"><div class="row" style="min-width:0">${I('file')}<div><div class="b s">Upitnik za nove klijente</div><div class="xs mute">samo u demu — vidi što novi klijent ispunjava</div></div></div><button class="btn sm acc" onclick="DROLE='new';enter()">Pogledaj</button></div>`:''}
-${row('msg','Jezik naziva vježbi','HR ili EN — drugi naziv je sitno ispod',langSeg())}
+${DEMO?`<div class="between"><div class="row" style="min-width:0">${I('file')}<div><div class="b s">Upitnik za nove klijente</div><div class="xs mute">samo u demu: vidi što novi klijent ispunjava</div></div></div><button class="btn sm acc" onclick="DROLE='new';enter()">Pogledaj</button></div>`:''}
+${row('msg','Jezik naziva vježbi','HR ili EN. Drugi naziv je sitno ispod',langSeg())}
 ${row('scale','Ciljana težina',s.goalKg?n1(s.goalKg)+' kg':'nije postavljena',`<button class="btn sm" onclick="goalM()">${s.goalKg?'Promijeni':'Postavi'}</button>`)}
 ${row('sun','Ekran ostaje upaljen','dok traje trening',tg(s.wake,"saveSet({wake:!setts().wake}).then(()=>keepScroll(render))"))}
 ${row('bolt','Težina serije','RIR ili RPE kao dodatni stupac',`<select class="inp" style="width:auto;min-height:36px" onchange="saveSet({effort:this.value}).then(()=>keepScroll(render))">${[['off','Isključeno'],['rir','RIR'],['rpe','RPE']].map(([v,l])=>`<option value="${v}" ${s.effort==v?'selected':''}>${l}</option>`).join('')}</select>`)}
@@ -291,7 +291,7 @@ ${row('body','Figura na mapi mišića','',`<div class="seg" style="width:120px">
 <div class="accs" style="margin-top:12px">${Object.keys(ACC).map(k=>`<button class="${s.acc==k?'on':''}" style="background:${ACC[k][0]}" title="${ACCN[k]}" aria-label="${ACCN[k]}" onclick="saveSet({acc:'${k}'}).then(()=>keepScroll(render))"></button>`).join('')}</div></div>
 </div></div>
 <div class="card stack"><a class="btn ghost" href="${CFG.ig}" target="_blank" rel="noopener">${I('msg')} Poruka treneru</a><button class="btn ghost" onclick="exportData()">${I('file')} Izvezi moje podatke (JSON)</button><button class="btn ghost" onclick="installHelp()">${I('down')} Dodaj na početni zaslon</button><a class="btn ghost" href="privatnost.html" target="_blank">${I('file')} Privatnost i uvjeti</a><button class="btn ghost" onclick="pwChangeM()">${I('edit')} Promijeni lozinku</button><button class="btn ghost" onclick="logout()">${I('out')} Odjava</button></div></div>`}
-async function toggleNotif(){const s=setts();if(!s.notif&&'Notification' in window&&Notification.permission!='granted'){const p=await Notification.requestPermission();if(p!='granted')toast('Obavijesti nisu dopuštene — ostaju zvuk i vibracija.')}await saveSet({notif:!s.notif});keepScroll(render)}
+async function toggleNotif(){const s=setts();if(!s.notif&&'Notification' in window&&Notification.permission!='granted'){const p=await Notification.requestPermission();if(p!='granted')toast('Obavijesti nisu dopuštene. Ostaju zvuk i vibracija.')}await saveSet({notif:!s.notif});keepScroll(render)}
 function download(name,text,type='application/json'){const u=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
 function exportData(){download('kfit-moji-podaci-'+today()+'.json',JSON.stringify({izvoz:new Date().toISOString(),program:PROG,unosi:LOGS},null,1));toast('Datoteka preuzeta.')}
 let BIP=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();BIP=e});

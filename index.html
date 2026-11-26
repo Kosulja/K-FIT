@@ -15,15 +15,15 @@
 <style>
 /* Layout: sticky top bar on desktop, bottom tab bar on phones. Dark-first: near-black ground with a faint red bias, graphite cards, dragon red as the single accent. */
 :root{--bg:#0e0f11;--card:#17181b;--ink:#ecece9;--mute:#9a9ca3;--line:#27282d;--soft:#202125;
---acc:#e0975c;--acc-ink:#1a1008;--acc-soft:#33231a;--acc-mid:#7b4b2b;
+--acc:#c9a54e;--acc-ink:#16120a;--acc-soft:#2a2414;--acc-mid:#6b5a2c;
 --ok:#5fd08a;--ok-soft:#143020;--warn:#e8bd4f;--warn-soft:#352b0e;--bad:#f08585;--bad-soft:#3a1b1b;
 --shadow:0 1px 2px rgb(0 0 0/.45),0 10px 24px -12px rgb(0 0 0/.7);color-scheme:dark}
 @media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f2f2ef;--card:#ffffff;--ink:#1a1b1e;--mute:#6b6d74;--line:#e3e3de;--soft:#ebebe7;
---acc:#b4622a;--acc-ink:#ffffff;--acc-soft:#f6e6d8;--acc-mid:#e6bd9b;
+--acc:#86671d;--acc-ink:#ffffff;--acc-soft:#f3ecd9;--acc-mid:#d9c48f;
 --ok:#15803d;--ok-soft:#dcf1e3;--warn:#946200;--warn-soft:#faedc4;--bad:#b91c1c;--bad-soft:#fbe1e1;
 --shadow:0 1px 2px rgb(20 10 10/.05),0 6px 18px -8px rgb(20 10 10/.15);color-scheme:light}}
 :root[data-theme="light"]{--bg:#f2f2ef;--card:#ffffff;--ink:#1a1b1e;--mute:#6b6d74;--line:#e3e3de;--soft:#ebebe7;
---acc:#b4622a;--acc-ink:#ffffff;--acc-soft:#f6e6d8;--acc-mid:#e6bd9b;
+--acc:#86671d;--acc-ink:#ffffff;--acc-soft:#f3ecd9;--acc-mid:#d9c48f;
 --ok:#15803d;--ok-soft:#dcf1e3;--warn:#946200;--warn-soft:#faedc4;--bad:#b91c1c;--bad-soft:#fbe1e1;
 --shadow:0 1px 2px rgb(20 10 10/.05),0 6px 18px -8px rgb(20 10 10/.15);color-scheme:light}
 html{scroll-padding-top:4.5rem}body{padding-top:env(safe-area-inset-top,0px)}
@@ -70,15 +70,15 @@ textarea.inp{min-height:96px;resize:vertical}
 .lrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line);min-width:0}
 .lrow:first-child{border-top:0}
 .tbl{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
-.tbl th{text-align:left;font-weight:600;color:var(--mute);padding:12px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+.tbl th{text-align:left;font-weight:600;color:var(--mute);padding:12px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:12.5px}
 .tbl td{padding:12px;border-bottom:1px solid var(--line);white-space:nowrap}
 .tbl tr.k{cursor:pointer}.tbl tr.k:hover td{background:var(--soft)}
 .seg{display:inline-flex;background:var(--soft);padding:3px;border-radius:11px}
 .seg button{min-height:36px;padding:0 13px;border-radius:8px;font-weight:600;font-size:14px;color:var(--mute);cursor:pointer}
 .seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0/.25)}
-.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.eyebrow{font-size:13px;font-weight:600;color:var(--mute)}
 .cg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.cg .h{color:var(--mute);font-size:11px;font-weight:700;text-align:center;padding:4px 0;text-transform:uppercase;letter-spacing:.08em}
+.cg .h{color:var(--mute);font-size:12px;font-weight:600;text-align:center;padding:4px 0}
 .cc{min-height:64px;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:6px 4px;cursor:pointer;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;overflow:hidden}
 .cc:hover{background:var(--soft)}
 .cc-o{opacity:.4}
@@ -93,7 +93,7 @@ textarea.inp{min-height:96px;resize:vertical}
 @media(min-width:768px){.sheet{max-width:600px;border-radius:18px;padding:24px}}
 .toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(14px + env(safe-area-inset-top,0px));z-index:70;background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:var(--shadow);max-width:calc(100vw - 32px)}
 .nt{padding:12px;background:var(--soft);border-radius:12px;white-space:pre-wrap;word-break:break-word}
-.today{background:linear-gradient(135deg,var(--acc-soft),var(--card) 60%);border-color:var(--acc-mid)}
+.today{background:var(--card);border-color:var(--acc-mid)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* iOS ne zumira polja od 16px */

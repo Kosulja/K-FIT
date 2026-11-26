@@ -15,7 +15,7 @@ const MEAS=[['waist','struk'],['belly','trbuh'],['hips','bokovi'],['thigh','bedr
 const QL=Object.fromEntries(QF.flatMap(s=>s[1]).map(f=>[f[0],f[1]]));
 const isMinor=bd=>{const a=ageOf(bd);return a!==''&&a<16};
 const ageOf=bd=>{if(!bd)return'';const b=pd(bd),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n.getMonth()<b.getMonth()||(n.getMonth()==b.getMonth()&&n.getDate()<b.getDate()))a--;return a>0&&a<110?a:''};
-function qNote(q){const L=[`UPITNIK — prva prijava u aplikaciju (${fmt(today())}.)`,
+function qNote(q){const L=[`Upitnik pri prvoj prijavi u aplikaciju (${fmt(today())}.)`,
  q.loc&&'Lokacija: '+q.loc,[q.age&&'Dob: '+q.age,q.h&&'Visina: '+q.h+' cm',q.kg&&'Težina: '+q.kg+' kg'].filter(Boolean).join(' · '),
  MEAS.some(([k])=>q[k])&&'Mjere: '+MEAS.filter(([k])=>q[k]).map(([k,l])=>l+' '+q[k]).join(' · ')+' cm',
  q.goal&&'Cilj: '+q.goal,'Ozljede / ograničenja: '+(q.inj||'—'),
@@ -33,11 +33,11 @@ function onboardView(o={}){const dr=LS.get('kfitk-q',{}),v={...(o.pre||{}),...dr
  const pair=fs=>{const out=[];for(let i=0;i<fs.length;i++){const f=fs[i],n=fs[i+1],short=x=>x&&['text','tel','date','num','age','email'].includes(x[2])&&!['loc','em'].includes(x[0])&&!/Koliko|kalorija/.test(x[1]);
   if(short(f)&&short(n)){out.push(`<div class="grid2">${fld(f)}${fld(n)}</div>`);i++}else out.push(fld(f))}return out.join('')};
  shell(`<form id="qf" class="stack" novalidate><div><div class="kick" style="color:var(--acc)">Dobrodošao u K-FIT</div><h1 style="margin-top:6px">Prije početka</h1>
-<p class="mute" style="margin-top:8px">Ovo je jednokratni upitnik. Treba ti oko 3 minute. Na temelju odgovora trener ti slaže program — što iskrenije, to bolje.</p></div>
+<p class="mute" style="margin-top:8px">Ovo je jednokratni upitnik. Treba ti oko 3 minute. Na temelju odgovora trener ti slaže program. Što iskrenije, to bolje.</p></div>
 ${QF.map(([t,fs,intro],i)=>`<div class="card stack"><div class="between"><h3>${t}</h3><span class="xs mute">${i+1}/${QF.length+1}</span></div>${intro?`<p class="xs mute">${intro}</p>`:''}${pair(fs)}</div>`).join('')}
 <div class="card stack" id="qph"><div class="between"><h3>Fotografije <span style="color:var(--acc)">*</span></h3><span class="xs mute">${QF.length+1}/${QF.length+1}</span></div>${PH_HINT}<div id="phs">${photoTiles(PHS)}</div></div>
 <label class="card row s" style="align-items:flex-start;gap:12px"><input type="checkbox" name="ok" ${v.ok=='da'?'checked':''} style="width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--acc)"><span>Pristajem da trener koristi ove podatke, uključujući one o zdravlju i fotografije, isključivo za izradu i praćenje mog programa. Pročitao/la sam <a href="privatnost.html" target="_blank" style="color:var(--acc)">politiku privatnosti i uvjete</a>. <span style="color:var(--acc)">*</span></span></label>
-<label class="f" id="qpar" ${isMinor(v.bd)?'':'hidden'}>Mlađi si od 16 — privolu daje roditelj ili skrbnik. Ime i prezime roditelja/skrbnika:<input class="inp" name="parent" value="${esc(v.parent||'')}" placeholder="Roditelj potvrđuje da je pročitao i da je suglasan"></label>
+<label class="f" id="qpar" ${isMinor(v.bd)?'':'hidden'}>Mlađi si od 16, pa privolu daje roditelj ili skrbnik. Ime i prezime roditelja/skrbnika:<input class="inp" name="parent" value="${esc(v.parent||'')}" placeholder="Roditelj potvrđuje da je pročitao i da je suglasan"></label>
 <div id="qerr" class="s" style="color:var(--bad)"></div>
 <button class="btn acc full" id="qsend">${I('check')} Pošalji i uđi u aplikaciju</button>
 <button type="button" class="btn ghost sm" onclick="${o.demo?'qDemoExit()':'logout()'}">${o.demo?I('back','sm')+' Natrag u demo':I('out','sm')+' Odjava'}</button></form>`);
@@ -55,7 +55,7 @@ ${QF.map(([t,fs,intro],i)=>`<div class="card stack"><div class="between"><h3>${t
   if(bad.length){err.textContent='Provjeri: '+bad.join(', ')+' (broj izgleda neobično).';return}
   const mp=PH.filter(([k])=>!PHS[k]).map(x=>x[1].toLowerCase());if(mp.length){err.textContent='Dodaj fotografije: '+mp.join(', ')+'.';$('#qph').style.outline='2px solid var(--bad)';$('#qph').scrollIntoView({block:'center',behavior:'smooth'});return}
   if(q.ok!='da'){err.textContent='Za nastavak označi privolu na dnu.';return}
-  if(isMinor(q.bd)&&!(q.parent||'').trim()){const p=$('#qpar');p.hidden=false;err.textContent='Mlađi si od 16 — upiši ime roditelja ili skrbnika koji daje privolu.';p.scrollIntoView({block:'center',behavior:'smooth'});return}
+  if(isMinor(q.bd)&&!(q.parent||'').trim()){const p=$('#qpar');p.hidden=false;err.textContent='Mlađi si od 16. Upiši ime roditelja ili skrbnika koji daje privolu.';p.scrollIntoView({block:'center',behavior:'smooth'});return}
   const b=$('#qsend');b.disabled=true;err.textContent='';
   let r;try{r=await API.onboard({...q,txt:qNote(q)+(q.parent?'\nPrivola roditelja/skrbnika: '+q.parent.trim()+' ('+fmt(today())+')':'')})}
   catch(x){console.error(x);err.textContent='Slanje nije uspjelo: '+(x.message||'provjeri internet')+'. Odgovori su sačuvani, pokušaj ponovno.';b.disabled=false;return}
@@ -64,16 +64,16 @@ ${QF.map(([t,fs,intro],i)=>`<div class="card stack"><div class="between"><h3>${t
   toast(!okp?'Upitnik je poslan, ali fotografije nisu. Pošalji ih s početnog ekrana.':r&&r.new?'Hvala! Tvoj profil je kreiran.':'Hvala! Podaci su poslani treneru.',3600);enter()};
  scrollTo(0,0)}
 const PHS={};
-const PH_HINT=`<p class="xs mute">Tri slike cijelog tijela: sprijeda, straga i s boka. Uska odjeća ili kupaći, dobro svjetlo, mobitel u visini prsa. Slike vidi <b>samo trener</b> — služe za usporedbu napretka.</p>`;
+const PH_HINT=`<p class="xs mute">Tri slike cijelog tijela: sprijeda, straga i s boka. Uska odjeća ili kupaći, dobro svjetlo, mobitel u visini prsa. Slike vidi <b>samo trener</b> i služe za usporedbu napretka.</p>`;
 function photoTiles(S){return `<div class="grid3">${PH.map(([k,l])=>`<label class="phtile ${S[k]?'has':''}" for="ph_${k}">${S[k]?`<img alt="${l}" src="${S[k].url}">`:`${I('body')}<span class="xs b">${l}</span><span class="xs mute">dodaj sliku</span>`}<input type="file" id="ph_${k}" accept="image/*" data-ph="${k}" hidden></label>`).join('')}</div>`}
 function bindTiles(box,S){box.querySelectorAll('[data-ph]').forEach(i=>i.onchange=async()=>{const f=i.files[0];if(!f)return;const k=i.dataset.ph;try{const bl=await shrink(f);if(S[k])URL.revokeObjectURL(S[k].url);S[k]={blob:bl,url:URL.createObjectURL(bl)};box.innerHTML=photoTiles(S);bindTiles(box,S);const q=$('#qph');if(q)q.style.outline=''}catch(e){toast('Ta slika se ne može otvoriti. Probaj drugu (JPG ili PNG).')}})}
 async function shrink(file,max=1600,q=.82){const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(file)});const s=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);const b=await new Promise(r=>c.toBlob(r,'image/jpeg',q));if(!b)throw new Error('slika');return b}
 async function sendPhotos(S,set){const data={set};for(const[k]of PH){if(!S[k])continue;data[k]=await API.uploadPhoto(CID,`${set}-${k}-${Date.now()}.jpg`,S[k].blob)}await put({id:'photos-'+set+(set=='start'?'':'-'+today()),kind:'photos',day:today(),data});PH.forEach(([k])=>{if(S[k]){URL.revokeObjectURL(S[k].url);delete S[k]}})}
 /* — početni ekran: podsjetnik ako slike nisu stigle — */
-function photosCard(){if(byKind('photos').length)return'';return `<button class="card tap" onclick="photosM()">${I('body')}<div style="flex:1"><div class="b">Pošalji početne fotografije</div><p class="s mute">Sprijeda, straga i s boka — trener ih treba za usporedbu napretka</p></div>${I('chev')}</button>`}
+function photosCard(){if(byKind('photos').length)return'';return `<button class="card tap" onclick="photosM()">${I('body')}<div style="flex:1"><div class="b">Pošalji početne fotografije</div><p class="s mute">Sprijeda, straga i s boka. Trener ih treba za usporedbu napretka</p></div>${I('chev')}</button>`}
 function photosM(set='start'){const S={};const o=sheet(`<div class="stack">${sheetHd(set=='start'?'Početne fotografije':'Nove fotografije napretka')}${PH_HINT}<div id="phm">${photoTiles(S)}</div><div id="pherr" class="s" style="color:var(--bad)"></div><button class="btn acc" id="phsend">${I('check')} Pošalji treneru</button></div>`);
  bindTiles(o.querySelector('#phm'),S);o.querySelector('#phsend').onclick=async e=>{const mp=PH.filter(([k])=>!S[k]).map(x=>x[1].toLowerCase());if(mp.length){o.querySelector('#pherr').textContent='Dodaj još: '+mp.join(', ')+'.';return}e.target.disabled=true;e.target.textContent='Šaljem…';
-  try{await sendPhotos(S,set);close(o);toast('Fotografije poslane treneru.');keepScroll(render)}catch(x){console.error(x);o.querySelector('#pherr').textContent='Slanje nije uspjelo — provjeri internet i pokušaj ponovno.';e.target.disabled=false;e.target.innerHTML=I('check')+' Pošalji treneru'}}}
+  try{await sendPhotos(S,set);close(o);toast('Fotografije poslane treneru.');keepScroll(render)}catch(x){console.error(x);o.querySelector('#pherr').textContent='Slanje nije uspjelo. Provjeri internet i pokušaj ponovno.';e.target.disabled=false;e.target.innerHTML=I('check')+' Pošalji treneru'}}}
 /* — trener: prikaz fotografija — */
 function photosBlock(L){const P=byKind('photos',L).sort((a,b)=>b.day.localeCompare(a.day));if(!P.length)return `<div class="card"><h3>Fotografije</h3><p class="s mute" style="margin-top:6px">Klijent još nije poslao fotografije.</p></div>`;
  after(()=>$$('img[data-path]').forEach(async im=>{try{im.src=await API.photoUrl(im.dataset.path)}catch(e){im.alt='Slika se ne može učitati'}}));
