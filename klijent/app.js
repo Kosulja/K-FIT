@@ -204,7 +204,7 @@ document.addEventListener('visibilitychange',async()=>{if(document.hidden||ROLE!
 
 function tabs(){const T=[['home','home','Danas'],['train','dumb','Trening'],['prog','chart','Napredak'],['pack','user','Ja']];
 return `<nav id="tabs"><div class="in">${T.map(([k,i,l])=>`<button class="${VIEW==k?'on':''}" onclick="go('${k}')">${I(i)}${l}</button>`).join('')}</div></nav>`}
-function go(v){VIEW=v;render();scrollTo(0,0)}
+function go(v){VIEW=v;const b=document.body;b.classList.add('enter');render();scrollTo(0,0);clearTimeout(go.t);go.t=setTimeout(()=>b.classList.remove('enter'),700)}
 function render(){if(ROLE=='coach')return coachRender();
  if(VIEW=='workout')return workoutView();
  const V={home:homeView,train:trainView,prog:()=>progressView(),pack:packView}[VIEW]||homeView;shell(V(),tabs())}

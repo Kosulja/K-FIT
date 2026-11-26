@@ -27,7 +27,7 @@
 --ok:#15803d;--ok-soft:#dcf1e3;--warn:#946200;--warn-soft:#faedc4;--bad:#b91c1c;--bad-soft:#fbe1e1;
 --shadow:0 1px 2px rgb(20 10 10/.05),0 6px 18px -8px rgb(20 10 10/.15);color-scheme:light}
 html{scroll-padding-top:4.5rem}body{padding-top:env(safe-area-inset-top,0px)}
-body{background:var(--bg);color:var(--ink);font-family:Barlow,system-ui,sans-serif;font-size:15px;line-height:1.45;overflow-x:hidden}
+body{background:var(--bg);color:var(--ink);font-family:Archivo,Barlow,system-ui,sans-serif;font-size:15px;line-height:1.45;overflow-x:hidden}
 h1,h2,h3{text-wrap:balance}
 .tnum{font-variant-numeric:tabular-nums}
 *:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
@@ -98,6 +98,13 @@ textarea.inp{min-height:96px;resize:vertical}
 
 /* iOS ne zumira polja od 16px */
 @media (max-width:700px){input,select,textarea{font-size:16px!important}}
+
+/* K-FIT tipografija i dubina */
+.font-display,.logo{font-family:'Big Shoulders Display','Barlow Condensed',system-ui,sans-serif!important;font-weight:900!important;letter-spacing:.01em}
+.logo{font-style:normal;font-size:32px}
+.card{box-shadow:inset 0 1px 0 rgb(255 255 255/.05),0 1px 0 rgb(0 0 0/.5),0 14px 34px -18px rgb(0 0 0/.85)}
+.btn-acc{background:linear-gradient(180deg,#ead08a,#cfa64a 48%,#a77f28)!important;color:#1a1408!important;box-shadow:inset 0 1px 0 rgb(255 255 255/.45),0 10px 22px -12px rgb(201 165 78/.7)}
+.sheet{box-shadow:0 -24px 60px -12px rgb(0 0 0/.65)}
 </style>
 
 <header class="topbar">
@@ -260,7 +267,7 @@ let CH={mv:[],yr:''},CHART=null;
 const cv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 function drawChart(){const el=$('#rev');if(!el||!window.Chart)return;if(CHART){CHART.destroy();CHART=null}
 const cur=(new Date()).getFullYear()==+CH.yr?new Date().getMonth():-1,mute=cv('--mute'),line=cv('--line'),acc=cv('--acc'),mid=cv('--acc-mid'),red=matchMedia('(prefers-reduced-motion: reduce)').matches;
-Chart.defaults.font.family='Barlow, system-ui, sans-serif';
+Chart.defaults.font.family='Archivo, Barlow, system-ui, sans-serif';
 CHART=new Chart(el,{type:'bar',data:{labels:MO.map(m=>m.slice(0,3)),datasets:[{label:'Prihod',data:CH.mv,backgroundColor:CH.mv.map((_,i)=>i==cur?acc:mid),hoverBackgroundColor:acc,borderRadius:6,borderSkipped:false,maxBarThickness:38}]},
 options:{responsive:true,maintainAspectRatio:false,animation:{duration:red?0:700,easing:'easeOutQuart'},interaction:{mode:'index',intersect:false},
 plugins:{legend:{display:false},tooltip:{backgroundColor:cv('--card'),titleColor:cv('--ink'),bodyColor:cv('--ink'),borderColor:line,borderWidth:1,padding:12,displayColors:false,titleFont:{size:13,weight:'600'},bodyFont:{size:15,weight:'600'},callbacks:{title:i=>MO[i[0].dataIndex]+' '+CH.yr,label:c=>eur(c.parsed.y)}}},
