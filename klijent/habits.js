@@ -42,7 +42,7 @@ ${coach?'':`<button class="btn sm ghost" onclick="slipM()">${I('edit','sm')} Ure
    Program: kT,pT,cT,fT (trening) · kR,pR,cR,fR (odmor) · foodNote. Unos: log 'food', id 'food-YYYY-MM-DD', data {kcal,p,c,f}. */
 const FM=[['kcal','Kcal','k',''],['p','Proteini','p','g'],['c','UH','c','g'],['f','Masti','f','g']];
 const hasFood=(P=PROG)=>!!(P&&(P.kT||P.kR));
-function isTrainDay(d,P=PROG,L=LOGS){return L.some(r=>r.kind=='workout'&&r.day==d)||(P.days||[]).some(x=>(x.wd||[]).includes(wdi(d)))}
+function isTrainDay(d,P=PROG,L=LOGS){if(L.some(r=>r.kind=='workout'&&r.day==d))return true;const pw=planOf(monday(d),L,P);return(P.days||[]).some(x=>(pw?(pw[x.id]||[]):(x.wd||[])).includes(wdi(d)))}
 function foodGoal(d,P=PROG,L=LOGS){const t=isTrainDay(d,P,L)&&(P.kT||!P.kR),s=t?'T':'R',g={kcal:+P['k'+s]||0,p:+P['p'+s]||0,c:+P['c'+s]||0,f:+P['f'+s]||0};return{train:t,...g}}
 const foodOf=(d,L=LOGS)=>{const r=L.find(x=>x.kind=='food'&&x.day==d);return r?r.data:{}};
 let FDT;
@@ -72,3 +72,8 @@ function goalCheck(){if(ROLE!='client'||!PROG)return;const t=today(),k='kfitk-hi
  const ids=[...new Set([...seen,...R.H.map(h=>h[0])])];
  if(R.all&&!seen.includes('all')){ids.push('all');LS.set(k,ids);confetti();sheet(`<div class="stack">${sheetHd('Savršen dan')}<p>Pogodio si sve današnje ciljeve. Tako se gradi rezultat.</p><div class="list">${R.H.map(h=>`<div class="row">${I('check')}<div style="flex:1"><b>${h[1]}</b></div><span class="mute tnum">${h[2]}</span></div>`).join('')}</div><button class="btn acc full" data-x>Super</button></div>`);return}
  LS.set(k,ids);toast((nw.length==1?'Cilj pogođen: ':'Ciljevi pogođeni: ')+nw.map(h=>h[1]+' ('+h[2]+')').join(', '),3500)}
+
+/* odstupanja na početnom ekranu: jedan redak, otvara se na dodir (manje gužve) */
+let SLIPOPEN=false;
+function slipsFold(){const c=slipsCard();if(!c)return'';const n=slipTot(slipOf(today())||{c:{}});
+ return `<details class="fold card" style="padding:0" ${SLIPOPEN?'open':''} ontoggle="SLIPOPEN=this.open"><summary class="between" style="padding:16px 18px"><span class="row" style="gap:10px">${I('check','sm')}<span class="b s">Odstupanja od plana</span></span><span class="xs mute">${n?'danas '+n:'danas ništa'} ${I('chev','sm')}</span></summary><div style="padding:0 2px 2px">${c.replace(/^(\s*)<div class="card/,'$1<div class="slipin card')}</div></details>`}

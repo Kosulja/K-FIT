@@ -8,16 +8,16 @@ const restSec=v=>{if(typeof v=='number')return v;const s=String(v||'');let m=s.m
 function estMin(day){return Math.round((day.ex||[]).reduce((s,e)=>s+(e.type=='cardio'?(+e.cmin||20)*60:(+e.s||1)*((e.type=='time'?(+e.t||30):40)+(e.ss?restSec(e.rest)/2:restSec(e.rest)))),0)/60)}
 
 /* ============ TJEDAN + PREMJEŠTANJE ============ */
-function weekItems(mon=monday(),L=LOGS,prog=PROG){const D=prog.days||[],mv=((L.find(x=>x.id=='move-'+mon)||{}).data||{}).map||{},items=[];
- for(let i=0;i<7;i++){const d=addD(mon,i);D.forEach(day=>{if((day.wd||[]).includes(i)){const k=d+'|'+day.id,to=mv[k];items.push(to==='skip'?{k,day,orig:d,date:null,skip:true}:{k,day,orig:d,date:to||d,moved:!!to&&to!=d})}})}
+function weekItems(mon=monday(),L=LOGS,prog=PROG){const D=prog.days||[],mv=((L.find(x=>x.id=='move-'+mon)||{}).data||{}).map||{},items=[],pw=planOf(mon,L,prog),wdOf=day=>pw?(pw[day.id]||[]):(day.wd||[]);
+ for(let i=0;i<7;i++){const d=addD(mon,i);D.forEach(day=>{if(wdOf(day).includes(i)){const k=d+'|'+day.id,to=mv[k];items.push(to==='skip'?{k,day,orig:d,date:null,skip:true}:{k,day,orig:d,date:to||d,moved:!!to&&to!=d})}})}
  const cnt={};byKind('workout',L).filter(r=>r.day>=mon&&r.day<=addD(mon,6)).forEach(r=>cnt[r.data.dayId]=(cnt[r.data.dayId]||0)+1);
  items.filter(x=>x.date).sort((a,b)=>a.date.localeCompare(b.date)).forEach(x=>{if(cnt[x.day.id]>0){x.done=true;cnt[x.day.id]--}});
  return items}
 function todayPlan(){const t=today(),D=PROG.days||[],done=byKind('workout').find(r=>r.day==t);if(done)return{done};
- if(D.some(d=>(d.wd||[]).length)){const W=weekItems(),it=W.find(x=>x.date==t&&!x.done),nx=W.filter(x=>x.date&&x.date>t&&!x.done).sort((a,b)=>a.date.localeCompare(b.date))[0];return it?{day:it.day,moved:it.moved}:{next:nx}}
+ if(D.some(d=>(d.wd||[]).length)||planOf(monday())){const W=weekItems(),it=W.find(x=>x.date==t&&!x.done),nx=W.filter(x=>x.date&&x.date>t&&!x.done).sort((a,b)=>a.date.localeCompare(b.date))[0];return it?{day:it.day,moved:it.moved}:{next:nx}}
  if(!D.length)return{};const last=workouts().pop();if(!last)return{day:D[0]};const i=D.findIndex(d=>d.id==last.data.dayId);return{day:D[(i+1)%D.length]}}
 async function moveItem(k,to){const mon=monday(),id='move-'+mon,r=LOGS.find(x=>x.id==id),map={...((r&&r.data.map)||{})};if(to==null)delete map[k];else map[k]=to;await put({id,kind:'move',day:mon,data:{map}});keepScroll(render)}
-function weekStrip(){const W=weekItems(),mon=monday(),sk=W.filter(x=>x.skip);if(!(PROG.days||[]).some(d=>(d.wd||[]).length))return '';
+function weekStrip(){const W=weekItems(),mon=monday(),sk=W.filter(x=>x.skip);if(!(PROG.days||[]).some(d=>(d.wd||[]).length)&&!planOf(mon))return planCard();
  return `<div class="card"><div class="between" style="margin-bottom:10px"><h3>Ovaj tjedan</h3><span class="xs mute">dodirni trening za premještanje</span></div><div class="week">${WD.map((w,i)=>{const d=addD(mon,i),its=W.filter(x=>x.date==d);return `<div class="d ${d==today()?'today':''}"><span class="wn">${w}</span><span class="dn">${pd(d).getDate()}</span>${its.map(x=>`<button class="pill ${x.done?'done':d==today()?'plan':''} ${x.moved?'moved':''}" onclick="itemM('${x.k}')">${x.done?I('check','sm'):esc(shortName(x.day))}</button>`).join('')}</div>`}).join('')}</div>
 ${sk.length?`<p class="xs mute" style="margin-top:8px">Preskočeno ovaj tjedan: ${sk.map(x=>`<button class="b" style="text-decoration:underline" onclick="itemM('${x.k}')">${esc(x.day.name)}</button>`).join(', ')}</p>`:''}</div>`}
 function itemM(k){const W=weekItems(),x=W.find(y=>y.k==k);if(!x)return;const mon=monday();

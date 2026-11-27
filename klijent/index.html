@@ -342,6 +342,29 @@ body.evid-on main{display:none}
 .body2 svg{height:min(330px,68vw);width:100%;display:block;margin:0 auto;stroke:var(--card);stroke-width:3;stroke-linejoin:round}
 .body2 .glow{filter:drop-shadow(0 0 10px color-mix(in srgb,var(--b-hi) 70%,transparent))}
 .body2 figcaption{font-size:12px;font-weight:600;color:var(--mute);margin-top:6px}
+
+/* planiranje tjedna */
+.plan-pick .d{cursor:pointer;border:1px solid var(--line);background:var(--soft);font:inherit;color:inherit;padding:8px 0 6px}
+.plan-pick .d:disabled{opacity:.35}
+.plan-pick .d.on{background:var(--acc-soft);border-color:var(--acc);color:var(--acc)}
+.plan-pick .pk{height:16px;display:grid;place-items:center}
+
+/* ============ K-FIT Prestiž: Michroma (naslovi, brojke) + Hanken Grotesk (tekst) ============ */
+body{font-family:'Hanken Grotesk',Archivo,system-ui,sans-serif;letter-spacing:0}
+h2,h3{font-family:'Hanken Grotesk',Archivo,system-ui,sans-serif}
+h1,.big,.brand,.week .d .dn,#rest .t,.timer-big,.av{font-family:Michroma,'Big Shoulders Display',system-ui,sans-serif;font-weight:400}
+h1{font-size:23px;text-transform:uppercase;letter-spacing:.07em;line-height:1.2}
+.big{font-size:28px;letter-spacing:.01em}
+.brand{font-size:19px;letter-spacing:.16em}
+.week .d .dn{font-size:14px}
+#rest .t{font-size:28px}
+.av{font-size:12px;letter-spacing:.04em}
+h2{font-weight:600;letter-spacing:.005em}h3{font-weight:600}
+.kick{text-transform:uppercase;letter-spacing:.09em;font-size:11px;font-weight:600}
+.sig{margin-top:10px;font-family:Michroma,'Big Shoulders Display',system-ui,sans-serif;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--acc)}
+details.fold>summary{list-style:none;cursor:pointer}details.fold>summary::-webkit-details-marker{display:none}
+.slipin{border:0!important;box-shadow:none!important;background:none!important;padding-top:0}
+.grid2 .big,.grid3 .big{font-size:22px;white-space:nowrap}.big{white-space:nowrap}
 </style>
 </head>
 <body class="enter">
@@ -354,6 +377,7 @@ body.evid-on main{display:none}
 <script src="body.js"></script>
 <script src="stats.js"></script>
 <script src="train.js"></script>
+<script src="plan.js"></script>
 <script src="swap.js"></script>
 <script src="onboard.js"></script>
 <script src="analytics.js"></script>
