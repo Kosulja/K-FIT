@@ -27,7 +27,7 @@ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',drop:
 plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',check:'<path d="m5 12 5 5 9-10"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',up:'<path d="m6 15 6-6 6 6"/>',down:'<path d="m6 9 6 6 6-6"/>',
 chev:'<path d="m9 6 6 6-6 6"/>',back:'<path d="m15 6-6 6 6 6"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
 steps:'<path d="M5 17c0-3 .6-8 3.2-8S10 13 10 15s-1 4-2.6 4S5 18.3 5 17zM19 12c0-3-.6-8-3.2-8S14 8 14 10s1 4 2.6 4S19 13.3 19 12z"/>',
-scale:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 10a5 5 0 0 1 8 0l-3 2.5"/>',download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',wallet:'<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+scale:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 10a5 5 0 0 1 8 0l-3 2.5"/>',download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',wallet:'<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',eye:'<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>',eyeoff:'<path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><path d="m2 2 20 20"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/>',moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
 users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2 .6 3.5 2.3 3.5 5.2"/>',
 edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
 msg:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',flame:'<path d="M12 22a7 7 0 0 0 7-7c0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-3 3-5 5-5 8a7 7 0 0 0 7 7z"/>',
@@ -203,7 +203,10 @@ ${AUTHMODE=='in'?`<button type="button" class="xs mute" onclick="AUTHMODE='re';l
 <hr style="border:0;border-top:1px solid var(--line);width:100%;margin:4px 0"><button type="button" class="btn ghost sm" onclick="LS.set('kfitk-demo-on',true);location.reload()">${I('play','sm')} ${T('Pogledaj demo','View demo')}</button></form></div>`;
 $('#lg').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button[type=submit]'),em=toLogin($('#lem').value),pw=$('#lpw')&&$('#lpw').value,err=$('#lerr');
  if(!SB){err.textContent='Nema veze s bazom.';return}b.disabled=true;err.textContent='';
- try{if(AUTHMODE=='in'){const{error}=await SB.auth.signInWithPassword({email:em,password:pw});if(error)throw error;enter()}
+ try{if(AUTHMODE=='in'){let{error}=await SB.auth.signInWithPassword({email:em,password:pw});
+  /* pravi email klijenta → njegovo korisničko ime za prijavu */
+  if(error&&em.includes('@')&&!em.endsWith(UDOM)){const{data:lg}=await SB.rpc('kfit_login_for',{mail:em});if(lg){({error}=await SB.auth.signInWithPassword({email:lg,password:pw}))}}
+  if(error)throw error;enter()}
  else if(AUTHMODE=='up'){const{data,error}=await SB.auth.signUp({email:em,password:pw,options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;if(data.session)enter();else infoView(T('Provjeri email','Check your email'),T('Poslali smo link za potvrdu na <b>','We sent a confirmation link to <b>')+esc(em)+T('</b>. Nakon potvrde se prijavi ovdje.','</b>. After confirming, sign in here.'))}
  else{if(em.endsWith(UDOM))throw new Error(T('Za korisničko ime novu lozinku ti daje trener. Javi mu se.','For a username login, your coach sets a new password. Contact him.'));const{error}=await SB.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});if(error)throw error;err.style.color='var(--ok)';err.textContent=T('Link za novu lozinku je poslan na email.','A password reset link has been sent to your email.')}}
  catch(x){err.textContent=/Invalid login/i.test(x.message)?T('Pogrešno korisničko ime/email ili lozinka.','Wrong username/email or password.'):/registered/i.test(x.message)?T('Taj email već ima račun. Prijavi se.','That email already has an account. Sign in.'):x.message}b.disabled=false}}
@@ -321,7 +324,7 @@ let BIP=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault(
 function installHelp(){if(BIP){BIP.prompt();BIP=null;return}sheet(`<div class="stack">${sheetHd('Instaliraj app')}<p><b>iPhone (Safari):</b> tipka Dijeli → „Dodaj na početni zaslon”.</p><p><b>Android (Chrome):</b> izbornik ⋮ → „Instaliraj aplikaciju”.</p><a class="btn ghost sm" href="instaliraj.html" target="_blank">Detaljne upute s koracima</a></div>`)}
 
 /* ============ PUSH OBAVIJESTI ============ */
-const APPV='40';
+const APPV='41';
 addEventListener('unhandledrejection',e=>{const m=e.reason&&(e.reason.message||e.reason);if(m&&ROLE=='client')toast('Greška: '+String(m).slice(0,120),5000)});
 const VAPID='BBGgvP78966HFRAiSQKynKAOdc-XHACULcCl9hrSWOCPmCL8Qka-fZ1QYroiuDOXvLRG4qP9-PtulVI2qQl_MiI';
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
@@ -366,3 +369,9 @@ function contactM(){const c=(ME&&ME.client)||{};const o=sheet(`<form class="stac
   if(DEMO){Object.assign(c,{tel:v.tel,em:v.mail,adr:v.adr});close(o);toast('Spremljeno.');return render()}
   const{error}=await SB.rpc('kfit_contact',v);if(error){b.disabled=false;f.querySelector('#cfe').textContent=error.message;return}
   Object.assign(c,{tel:v.tel,em:v.mail,adr:v.adr});close(o);toast('Spremljeno. Trener vidi nove podatke.');keepScroll(render)}}
+
+/* oko za prikaz lozinke na svim poljima za lozinku */
+function addEyes(){document.querySelectorAll('input[type=password]:not([data-eye])').forEach(i=>{i.dataset.eye=1;const w=document.createElement('span');w.className='pwwrap';i.parentNode.insertBefore(w,i);w.appendChild(i);
+ const b=document.createElement('button');b.type='button';b.className='pweye';b.tabIndex=-1;b.setAttribute('aria-label','Prikaži lozinku');b.innerHTML=I('eye','sm');
+ b.onclick=()=>{const sh=i.type=='password';i.type=sh?'text':'password';b.innerHTML=I(sh?'eyeoff':'eye','sm');b.setAttribute('aria-label',sh?'Sakrij lozinku':'Prikaži lozinku');i.focus()};w.appendChild(b)})}
+new MutationObserver(addEyes).observe(document.documentElement,{childList:true,subtree:true});addEyes();
