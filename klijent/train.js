@@ -85,6 +85,13 @@ function beginW(d,bw){const dr={id:'w-'+uid(),dayId:d.id,name:d.name,t0:Date.now
  ex:d.ex.map(e=>{const t=target(e,d),n=Math.max(1,+e.s||1);return{id:e.id,lib:e.lib||null,n:e.n,custom:!!e.custom,hr:e.hr||'',type:e.type||'reps',mus:e.mus||[],mus2:e.mus2||[],ss:e.ss||'',rest:restSec(e.rest),bw:!!e.bw,r:e.r,note:e.note||'',v:e.v||'',tgt:t,
   sets:e.type=='cardio'?[]:Array.from({length:n},(_,i)=>({kg:t.kg===''?'':t.kg,r:'',t:'',e:'',ok:false,tr:t.reps[i]||'',tt:t.t})),cardio:e.type=='cardio'?{min:'',kmh:t.kmh||'',km:'',ok:false}:null}})};
  setDr(dr);liveSet(true,d.name);VIEW='workout';render();scrollTo(0,0);wake(true)}
+/* nastavak već spremljenog treninga (npr. slučajno završen) */
+async function resumeW(logId){const r=LOGS.find(x=>x.id==logId);if(!r)return;const d=(PROG.days||[]).find(x=>x.id==r.data.dayId);if(!d){toast('Taj dan više nije u programu.');return}
+ if(getDr()&&!await ask('Već imaš započet trening. Zamijeniti ga ovim?','Zamijeni',1))return;
+ const ix=LOGS.indexOf(r);LOGS.splice(ix,1);try{beginW(d,r.data.bw)}finally{LOGS.splice(ix,0,r)}const dr=getDr();dr.id=r.id;dr.t0=Date.now()-(+r.data.dur||0)*60000;dr.prs=r.data.prs||[];dr.note=r.data.note||'';dr.rpe=r.data.rpe||null;
+ (r.data.ex||[]).forEach(le=>{const e=dr.ex.find(x=>x.id==le.id);if(!e)return;if(le.cn)e.cn=le.cn;if(e.type=='cardio'){if(le.cardio)e.cardio={min:le.cardio.min??'',kmh:le.cardio.kmh??'',km:le.cardio.km??'',ok:true};return}
+  (le.sets||[]).forEach((s,i)=>{if(!e.sets[i])e.sets.push({kg:'',r:'',t:'',e:'',ok:false,tr:'',tt:''});Object.assign(e.sets[i],{kg:s.kg===0&&e.bw?'':String(s.kg??''),r:s.r!=null?String(s.r):'',t:s.t!=null?String(s.t):'',e:s.e!=null?String(s.e):'',ok:true})})});
+ setDr(dr);render();toast('Nastavljaš gdje si stao.')}
 async function liveSet(on,name){try{if(on)await API.put(CID,{id:'live',kind:'live',day:today(),data:{ts:Date.now(),name}});else await API.del(CID,'live')}catch(e){}}
 
 /* — ekran budan — */
@@ -133,7 +140,7 @@ ${t.why?`<div class="why">${I('bolt','sm')}<span>${esc(t.why)}</span></div>`:''}
 <main style="padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))"><div class="stack">${(()=>{const wd=((PROG&&PROG.days)||[]).find(x=>x.id==dr.dayId);return wd&&wd.warm?`<details class="card warm" ${done?'':'open'}><summary class="between"><span class="row" style="gap:8px"><b>Zagrijavanje</b></span><span class="xs mute">prije prve serije</span></summary><p class="s" style="white-space:pre-line;margin-top:10px">${esc(wd.warm)}</p></details>`:''})()}${G.map(g=>g.length>1?`<div class="card ex stack" style="gap:16px"><div class="kick" style="color:var(--acc)">${I('link','sm')} Superset ${esc(dr.ex[g[0]].ss)}: serije naizmjence, odmor tek nakon para</div>${g.map((ei,j)=>exHtml(ei,dr.ex[ei].ss+(j+1))).join('<hr style="border:0;border-top:1px solid var(--line);margin:0">')}</div>`:`<div class="card ex">${exHtml(g[0])}</div>`).join('')}
 <div class="card stack"><label class="f">Koliko je bilo teško? (RPE 1–10)<div class="scale" id="rpe">${[5,6,7,8,9,10].map(n=>`<button type="button" class="${dr.rpe==n?'on':''}" onclick="dSet('rpe',${n})">${n}</button>`).join('')}</div></label>
 <label class="f">Bilješka za trenera<textarea class="inp" id="wnote" placeholder="Npr. bol u ramenu, povećati težinu…">${esc(dr.note||'')}</textarea></label></div></div></main>
-<div class="wbar"><div class="in"><div style="flex:1"><div class="bar"><i style="width:${all?done/all*100:0}%"></i></div></div><button class="btn acc" onclick="finishW()">${I('check')} Završi</button></div></div>`;
+<div class="wbar"><div class="in"><div style="flex:1"><div class="xs mute tnum" style="margin-bottom:6px">${done} / ${all} serija</div><div class="bar"><i style="width:${all?done/all*100:0}%"></i></div></div><button class="btn ${all&&done>=all?'acc':'ghost'}" onclick="finishW()">${I('check','sm')} Završi trening</button></div></div>`;
  $$('.sets .inp').forEach(i=>i.oninput=()=>upd(d=>{if(i.dataset.c)d.ex[i.dataset.e].cardio[i.dataset.c]=i.value;else d.ex[i.dataset.e].sets[i.dataset.s][i.dataset.f]=i.value}));
  $('#wnote').oninput=e=>upd(d=>d.note=e.target.value);
  $$('[data-cn]').forEach(t=>t.oninput=()=>upd(d=>d.ex[t.dataset.cn].cn=t.value));
@@ -169,7 +176,7 @@ const st=()=>setts();
 function cardioOk(ei){upd(d=>{const c=d.ex[ei].cardio;if(!c.ok&&c.min==='')c.min=String(d.ex[ei].tgt.cmin||'');c.ok=!c.ok});keepScroll(workoutView)}
 function addSet(ei,n){upd(d=>{const S=d.ex[ei].sets;if(n>0){const p=S[S.length-1]||{};S.push({kg:p.kg||'',r:'',t:'',e:'',ok:false,tr:p.tr||'',tt:p.tt||''})}else if(S.length>1)S.pop()});keepScroll(workoutView)}
 async function cancelW(){if(!await ask('Odustati od treninga? Upisani podaci neće se spremiti.','Odustani',1))return;LS.del(DK);clearInterval(window.TICK);restDone(true);wake(false);liveSet(false);go('train')}
-async function finishW(){const d=getDr();
+async function finishW(){const d=getDr();{const tot=d.ex.reduce((a,e)=>a+(e.type=='cardio'?1:e.sets.length),0),dn=d.ex.reduce((a,e)=>a+(e.type=='cardio'?(e.cardio&&e.cardio.ok?1:0):e.sets.filter(x=>x.ok).length),0);if(dn<tot&&!await ask(`Odradio si ${dn} od ${tot} serija. Želiš li stvarno završiti trening? Ako samo čekaš odmor, odustani.`,'Završi trening',1))return}
  const ex=d.ex.map(e=>e.type=='cardio'?{id:e.id,lib:e.lib,n:e.n,custom:e.custom,type:'cardio',...(e.swapFrom?{swapFrom:{lib:e.swapFrom.lib,n:e.swapFrom.n},swapWhy:e.swapWhy}:{}),mus:e.mus,mus2:e.mus2,cardio:e.cardio.ok||e.cardio.min!==''?{min:num(e.cardio.min)||0,kmh:num(e.cardio.kmh),km:num(e.cardio.km)}:null,tgt:e.tgt}
   :{id:e.id,lib:e.lib,n:e.n,custom:e.custom,type:e.type,ss:e.ss,...(e.swapFrom?{swapFrom:{lib:e.swapFrom.lib,n:e.swapFrom.n,custom:e.swapFrom.custom},swapWhy:e.swapWhy}:{}),...(e.moved?{moved:true}:{}),mus:e.mus,mus2:e.mus2,tgt:{kg:e.tgt.kg,reps:e.tgt.reps,t:e.tgt.t,rule:e.tgt.rule},
    cn:(e.cn||'').trim(),rest:restSum(d,d.ex.indexOf(e)),
