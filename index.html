@@ -345,7 +345,7 @@ ${sec('Zadnje uplate','receipt',li(recent,u=>`<div class="lrow">${cl(C(u.c)||{id
 </div>`}
 /* POKRETANJE */
 const CFG={url:'https://jcxooxyrpahcwsvvzybo.supabase.co',key:'sb_publishable_FG7mdGIEQm_VkdBDayS9DA_fO59I82d'};
-let SB=null,SESS=null;try{SB=supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:true,autoRefreshToken:true}})}catch(e){console.error(e)}
+let SB=null,SESS=null;try{SB=supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'kfit-klijent-auth'}})}catch(e){console.error(e)}
 /* sloj baze: ista sučelja (collection/doc/onSnapshot) preko Supabase tablice kdocs(col,id,data) */
 function mkDb(){const T='kdocs',ref=(c,id)=>({
 async get(){const{data,error}=await SB.from(T).select('data').eq('col',c).eq('id',String(id)).maybeSingle();if(error)throw error;return{exists:!!data,data:()=>data&&data.data}},
