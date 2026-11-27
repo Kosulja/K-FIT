@@ -10,13 +10,13 @@ function expChip(cid){if(DEMO||!COACH.links[cid]||!COACH.packs)return'';const u=
 const CTABS=[['dash','chart','Pregled'],['cl','user','Klijenti'],['cal','cal','Kalendar'],['fin','wallet','Financije'],['cat','box','Paketi']];
 function coachTabs(){const t=COACH.top||'cl';return `<nav id="tabs"><div class="in">${CTABS.map(([k,i,l])=>`<button class="${t==k?'on':''}" onclick="coachGo('${k}')">${I(i)}${l}</button>`).join('')}</div></nav>`}
 function coachGo(k,id){COACH.top=k;if(k=='cl'){COACH.sel=null;evidHide();return coachRender()}openEvid(k,id)}
-function evidHide(){const f=$('#evid');if(f)f.style.display='none';document.body.classList.remove('evid-on')}
+function evidHide(){const f=$('#evidw');if(f)f.style.display='none';document.body.classList.remove('evid-on')}
 function openEvid(v,id){COACH.top=v=='pr'||v=='set'?COACH.top||'cl':v;if(v=='pr')COACH.top='cl';
- shell('',coachTabs());let f=$('#evid');const src='../?embed=1&v='+v+(id?'&id='+encodeURIComponent(id):'');
- if(!f||DEMO){f&&f.remove();f=document.createElement('iframe');f.id='evid';f.title='Evidencija';f.onload=()=>{evidAuth(f);evidFit()};f.src=DEMO?'about:blank':src;document.body.appendChild(f);if(DEMO)f.srcdoc='<body style="margin:0;background:#0c0c0b"><p style="font:16px system-ui;padding:24px;color:#999">Evidencija (kalendar, paketi, uplate) radi samo u pravoj prijavi, ne u demou.</p>'}
+ shell('',coachTabs());let w=$('#evidw');if(!w||DEMO){w&&w.remove();w=document.createElement('div');w.id='evidw';document.body.appendChild(w)}let f=$('#evid');const src='../?embed=1&v='+v+(id?'&id='+encodeURIComponent(id):'');
+ if(!f||DEMO){f&&f.remove();f=document.createElement('iframe');f.id='evid';f.title='Evidencija';f.onload=()=>{evidAuth(f);evidFit()};f.src=DEMO?'about:blank':src;w.appendChild(f);if(DEMO)f.srcdoc='<body style="margin:0;background:#0c0c0b"><p style="font:16px system-ui;padding:24px;color:#999">Evidencija (kalendar, paketi, uplate) radi samo u pravoj prijavi, ne u demou.</p>'}
  else{f.style.display='';try{f.contentWindow.postMessage({go:v,id},location.origin)}catch(e){f.src=src}}
- f.style.display='';document.body.classList.add('evid-on');evidFit();setTimeout(evidFit,250);setTimeout(evidFit,1200)}
-function evidFit(){const f=$('#evid');if(!f)return;const t=$('#top'),b=$('#tabs'),top=t?Math.max(0,t.getBoundingClientRect().bottom):0,bot=b&&b.offsetHeight?b.offsetHeight:64,vh=window.visualViewport?visualViewport.height:innerHeight;f.style.top=top+'px';f.style.bottom='auto';f.style.height=Math.max(200,vh-top-bot)+'px'}
+ w.style.display='';f.style.display='';document.body.classList.add('evid-on');evidFit();setTimeout(evidFit,250);setTimeout(evidFit,1200)}
+function evidFit(){const w=$('#evidw');if(!w)return;const t=$('#top'),b=$('#tabs');w.style.top=(t?Math.max(0,t.getBoundingClientRect().bottom):0)+'px';w.style.bottom=(b&&b.offsetHeight?b.offsetHeight:64)+'px'}
 addEventListener('load',()=>setTimeout(evidFit,300));
 addEventListener('resize',()=>{if(document.body.classList.contains('evid-on'))evidFit()});
 async function evidAuth(f){try{const{data:{session}}=await SB.auth.getSession();if(session&&f.contentWindow)f.contentWindow.postMessage({auth:{access_token:session.access_token,refresh_token:session.refresh_token}},location.origin)}catch(e){}}
