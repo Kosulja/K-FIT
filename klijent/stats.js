@@ -4,7 +4,7 @@ const MUS_ALL=Object.keys(MUS);
 const plural=(n,a,b,c)=>{const m=n%10,h=n%100;return m==1&&h!=11?a:m>=2&&m<=4&&(h<12||h>14)?b:c};
 const EQ={barbell:'Šipka',dumbbell:'Bučice',cable:'Sajla',machine:'Sprava','body only':'Vlastita težina',kettlebells:'Girja',bands:'Gume','e-z curl bar':'EZ šipka','medicine ball':'Medicinka','exercise ball':'Pilates lopta','foam roll':'Valjak',other:'Ostalo'};
 const CAT={strength:'Snaga',stretching:'Istezanje',plyometrics:'Pliometrija',strongman:'Strongman',powerlifting:'Powerlifting',cardio:'Kardio','olympic weightlifting':'Olimpijsko dizanje'};
-const IMG=window.KFIT_PREVIEW?'img/':'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+const IMG='vjezbe/',IMGX='.webp'; /* vlastita kopija (public domain, free-exercise-db) */
 let LIB=null,LIBP=null;
 function loadLib(){if(LIB)return Promise.resolve(LIB);if(!LIBP)LIBP=fetch('exercises.json').then(r=>r.json()).then(a=>{LIB=a.map(x=>({id:x[0],n:x[1],cat:x[2],eq:x[3],mus:x[4],mus2:x[5],ins:x[6],hr:x[7]||x[1],force:x[8]||'',mech:x[9]||'',lvl:x[10]||''}));LIB.byId=Object.fromEntries(LIB.map(x=>[x.id,x]));return LIB}).catch(e=>{LIBP=null;throw e});return LIBP}
 const libGet=id=>(LIB&&LIB.byId[id])||CUST.find(x=>x.id==id)||null;
@@ -12,7 +12,7 @@ const libGet=id=>(LIB&&LIB.byId[id])||CUST.find(x=>x.id==id)||null;
 const libN=(x,lang=LANG)=>x?(lang=='en'?x.n:(x.hr||x.n)):'';
 function exName(e){if(!e)return'';if(e.custom||!e.lib)return e.n||'';const x=libGet(e.lib);if(x&&!x.own&&!String(x.id).startsWith('c_'))return e.n&&e.n!=x.n?e.n:libN(x);if(x)return x.n;return LANG=='hr'&&e.hr?e.hr:e.n||''}
 const altName=e=>{if(!e||e.custom||!e.lib)return'';const x=LIB&&LIB.byId[e.lib];if(!x)return'';const o=libN(x,LANG=='en'?'hr':'en');return o!=exName(e)?o:''};
-const thumb=(lib,cls='thumb')=>lib&&!String(lib).startsWith('c_')?`<img class="${cls}" loading="lazy" alt="" src="${IMG}${encodeURI(lib)}/0.jpg" onerror="this.outerHTML='<span class=&quot;${cls} ph&quot;>'+I('dumb','sm')+'</span>'">`:`<span class="${cls} ph">${I('dumb','sm')}</span>`;
+const thumb=(lib,cls='thumb')=>lib&&!String(lib).startsWith('c_')?`<img class="${cls}" loading="lazy" alt="" src="${IMG}${encodeURI(lib)}/0.webp" onerror="this.outerHTML='<span class=&quot;${cls} ph&quot;>'+I('dumb','sm')+'</span>'">`:`<span class="${cls} ph">${I('dumb','sm')}</span>`;
 
 /* ============ 1RM ============ */
 const e1=(kg,r)=>kg>0&&r>=1&&r<=12?(r==1?kg:kg*(1+r/30)):null;
@@ -89,7 +89,7 @@ async function exDetail(key,libId,coach){const L=coach?COACH.logs:LOGS;try{await
  const pts=H.map(h=>{const b=bestSet(h.e.sets);return b?{d:h.day,v:b.v,b}:null}).filter(Boolean),best=pts.reduce((a,p)=>!a||p.v>a.v?p:a,null);
  const isT=H.some(h=>h.e.type=='time'),isC=H.some(h=>h.e.type=='cardio');
  const o=sheet(`<div class="stack">${sheetHd(esc(name))}${alt&&alt!=name?`<p class="xs mute" style="margin-top:-6px">${esc(alt)}</p>`:''}
-${lib&&!String(lib.id).startsWith('c_')?`<div class="demo" id="dm"><img alt="" onerror="var d=this.closest('.demo');if(d)d.remove()" src="${IMG}${encodeURI(lib.id)}/0.jpg"><img alt="" onerror="var d=this.closest('.demo');if(d)d.classList.add('one');this.remove()" src="${IMG}${encodeURI(lib.id)}/1.jpg"></div>`:lib&&lib.desc?`<div class="card flat" style="padding:12px"><p class="s">${esc(lib.desc)}</p></div>`:''}
+${lib&&!String(lib.id).startsWith('c_')?`<div class="demo" id="dm"><img alt="" onerror="var d=this.closest('.demo');if(d)d.remove()" src="${IMG}${encodeURI(lib.id)}/0.webp"><img alt="" onerror="var d=this.closest('.demo');if(d)d.classList.add('one');this.remove()" src="${IMG}${encodeURI(lib.id)}/1.webp"></div>`:lib&&lib.desc?`<div class="card flat" style="padding:12px"><p class="s">${esc(lib.desc)}</p></div>`:''}
 ${lib?`<div class="chips">${(lib.mus||[]).map(m=>`<span class="chip acc">${MUS[m]||m}</span>`).join('')}${(lib.mus2||[]).map(m=>`<span class="chip">${MUS[m]||m}</span>`).join('')}${lib.eq?`<span class="chip">${EQ[lib.eq]||lib.eq}</span>`:''}</div>`:''}
 ${pe&&pe.v?`<button class="btn ghost" onclick='videoM(${jattr(name)},${jattr(pe.v)})'>${I('play')} Video trenera</button>`:''}
 ${pe&&pe.note?`<div class="why">${I('msg','sm')}<span>${esc(pe.note)}</span></div>`:''}

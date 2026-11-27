@@ -30,7 +30,7 @@ function coachRender(){if(COACH.top&&COACH.top!='cl')return openEvid(COACH.top);
 <div class="card"><div class="kick" style="margin-bottom:10px">Nisu povezani (${off.length})</div>${off.length?`<div class="list">${off.map(card).join('')}</div>`:'<div class="empty">Svi su povezani.</div>'}</div>
 <button class="btn acc" onclick="importM()">${I('file')} Uvezi postojeće klijente iz Excela</button>
 <div class="grid2"><button class="btn ghost" onclick="copyLink()">${I('link')} Link za klijente</button><button class="btn ghost" onclick="libSheet()">${I('search')} Baza vježbi</button></div></div>`)}
-function coachSet(){const t=LS.get('kfitk-theme',{theme:'auto',acc:'bakar'});const o=sheet(`<div class="stack">${sheetHd('Izgled')}<div class="between"><span class="b s">Jezik naziva vježbi</span>${langSeg('coachLang')}</div><div class="seg">${[['auto','Auto'],['dark','Tamna'],['light','Svijetla']].map(([v,l])=>`<button class="${(t.theme||'auto')==v?'on':''}" data-t="${v}">${l}</button>`).join('')}</div><div class="accs">${Object.keys(ACC).map(k=>`<button class="${(t.acc||'bakar')==k?'on':''}" style="background:${ACC[k][0]}" data-a="${k}" aria-label="${ACCN[k]}"></button>`).join('')}</div></div>`);
+function coachSet(){const t=LS.get('kfitk-theme',{theme:'auto',acc:'kfit'});const o=sheet(`<div class="stack">${sheetHd('Izgled')}<div class="between"><span class="b s">Jezik naziva vježbi</span>${langSeg('coachLang')}</div><div class="seg">${[['auto','Auto'],['dark','Tamna'],['light','Svijetla']].map(([v,l])=>`<button class="${(t.theme||'auto')==v?'on':''}" data-t="${v}">${l}</button>`).join('')}</div><div class="accs">${Object.keys(ACC).map(k=>`<button class="${(t.acc||'kfit')==k?'on':''}" style="background:${ACC[k][0]}" data-a="${k}" aria-label="${ACCN[k]}"></button>`).join('')}</div><div class="card flat stack" style="padding:14px;gap:8px"><div class="b">Backup</div><p class="xs mute" style="margin:0">Cijela baza i sve fotografije u jednoj ZIP datoteci. Spremi je na šifrirani disk ili USB.${LS.get('kfitk-last-backup','')?' Zadnji backup: '+fmt(LS.get('kfitk-last-backup','')):''}</p><button class="btn ghost full" onclick="backupAll(this)">${I('download','sm')} Napravi backup</button></div></div>`);
  o.onclick=e=>{if(e.target==o)return close(o);const b=e.target.closest('[data-t],[data-a]');if(!b)return;const n={...t,...(b.dataset.t?{theme:b.dataset.t}:{acc:b.dataset.a})};LS.set('kfitk-theme',n);applyTheme(n);close(o);coachSet()}}
 function coachLang(l){document.querySelectorAll('.ov').forEach(o=>o.remove());setLang(l);coachSet()}
 function copyLink(){const u=location.origin+location.pathname;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link kopiran: '+u),()=>prompt('Link za klijente:',u))}
@@ -209,3 +209,28 @@ function accShareM(c,un,pw,first){const msg=`Bok ${c.f||''}! ${first?'Tvoj prist
 <div class="card flat" style="padding:14px"><div class="xs mute">Korisničko ime</div><div class="b tnum" style="font-size:18px">${esc(un)}</div><div class="xs mute" style="margin-top:8px">Lozinka</div><div class="b tnum" style="font-size:18px">${esc(pw)}</div></div>
 <div class="grid2"><button class="btn ghost" id="acc-cp">${I('copy')} Kopiraj poruku</button><a class="btn acc" target="_blank" rel="noopener" href="https://wa.me/${tel}?text=${encodeURIComponent(msg)}">${I('msg')} WhatsApp</a></div></div>`);
  o.querySelector('#acc-cp').onclick=async()=>{try{await navigator.clipboard.writeText(msg);toast('Kopirano.')}catch(e){toast('Kopiranje nije uspjelo, prepiši ručno.')}}}
+
+/* ---------- BACKUP: cijela baza + sve fotografije u jednoj ZIP datoteci ---------- */
+const CRCT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRCT[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0};
+function makeZip(files){/* files: [{name, data:Uint8Array}] — bez kompresije (fotografije su već komprimirane) */
+ const enc=new TextEncoder(),parts=[],central=[];let off=0;const now=new Date(),dt=((now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1)),dd=(((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate());
+ for(const f of files){const nm=enc.encode(f.name),d=f.data,c=crc32(d),h=new DataView(new ArrayBuffer(30));
+  [[0,0x04034b50,4],[4,20,2],[6,0x0800,2],[8,0,2],[10,dt,2],[12,dd,2],[14,c,4],[18,d.length,4],[22,d.length,4],[26,nm.length,2],[28,0,2]].forEach(([o,v,s])=>s==4?h.setUint32(o,v,true):h.setUint16(o,v,true));
+  parts.push(new Uint8Array(h.buffer),nm,d);const ch=new DataView(new ArrayBuffer(46));
+  [[0,0x02014b50,4],[4,20,2],[6,20,2],[8,0x0800,2],[10,0,2],[12,dt,2],[14,dd,2],[16,c,4],[20,d.length,4],[24,d.length,4],[28,nm.length,2],[30,0,2],[32,0,2],[34,0,2],[36,0,2],[38,0,4],[42,off,4]].forEach(([o,v,s])=>s==4?ch.setUint32(o,v,true):ch.setUint16(o,v,true));
+  central.push(new Uint8Array(ch.buffer),nm);off+=30+nm.length+d.length}
+ const cs=central.reduce((a,b)=>a+b.length,0),e=new DataView(new ArrayBuffer(22));
+ [[0,0x06054b50,4],[4,0,2],[6,0,2],[8,files.length,2],[10,files.length,2],[12,cs,4],[16,off,4],[20,0,2]].forEach(([o,v,s])=>s==4?e.setUint32(o,v,true):e.setUint16(o,v,true));
+ return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type:'application/zip'})}
+async function backupAll(btn){if(DEMO){toast('Backup radi samo u pravoj prijavi.');return}
+ const say=t=>{if(btn)btn.textContent=t};btn&&(btn.disabled=true);
+ try{const enc=new TextEncoder(),files=[],all=async(tb,sel='*')=>{let out=[],from=0;for(;;){const{data,error}=await SB.from(tb).select(sel).range(from,from+999);if(error)throw error;out=out.concat(data);if(data.length<1000)break;from+=1000}return out};
+  say('Preuzimam bazu…');const db={napravljeno:new Date().toISOString(),evidencija:await all('kdocs'),programi:await all('kfit_programs'),zapisi:await all('kfit_logs'),pristupi:await all('kfit_links','client_id,email,created_at')};
+  files.push({name:'baza.json',data:enc.encode(JSON.stringify(db,null,1))});
+  const list=async(p)=>{const{data,error}=await SB.storage.from('kfit-photos').list(p,{limit:1000});if(error)throw error;let out=[];for(const x of data){const q=p?p+'/'+x.name:x.name;if(x.id)out.push(q);else out=out.concat(await list(q))}return out};
+  const ph=await list('');let i=0;for(const p of ph){say(`Fotografije ${++i}/${ph.length}…`);const{data,error}=await SB.storage.from('kfit-photos').download(p);if(!error&&data)files.push({name:'fotografije/'+p,data:new Uint8Array(await data.arrayBuffer())})}
+  files.push({name:'PROCITAJ.txt',data:enc.encode('K-FIT backup '+new Date().toLocaleString('hr-HR')+'\n\nbaza.json: evidencija (klijenti, paketi, uplate, treninzi, cjenik), programi i svi zapisi klijenata.\nfotografije/: fotografije napretka po klijentu.\n\nSadrži zdravstvene podatke i fotografije klijenata. Čuvaj na šifriranom disku ili USB-u.\n')});
+  say('Slažem datoteku…');const blob=makeZip(files),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='K-FIT-backup-'+today()+'.zip';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),8000);
+  LS.set('kfitk-last-backup',today());toast(`Backup spreman: ${(blob.size/1e6).toFixed(1)} MB, ${ph.length} fotografija.`,4000)}
+ catch(e){console.error(e);toast('Backup nije uspio: '+(e.message||e))}finally{if(btn){btn.disabled=false;btn.innerHTML=I('download','sm')+' Napravi backup'}}}
