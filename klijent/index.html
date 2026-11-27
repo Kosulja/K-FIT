@@ -332,6 +332,16 @@ button.badge{font:inherit;color:inherit;cursor:pointer;width:100%}
 /* ugrađena evidencija u trenerskom dijelu */
 #evid{position:fixed;left:0;right:0;width:100%;border:0;background:var(--bg);z-index:5}
 body.evid-on main{display:none}
+
+/* anatomski lik */
+:root{--b-base:#383630;--b-neu:#24231f;--b-lo:#6b5524;--b-hi:#f0d27a}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--b-base:#e4e2dc;--b-neu:#efede8;--b-lo:#e7d39b;--b-hi:#a5801f}}
+:root[data-theme="light"]{--b-base:#e4e2dc;--b-neu:#efede8;--b-lo:#e7d39b;--b-hi:#a5801f}
+.body2{display:flex;justify-content:center;gap:4%}
+.body2 figure{margin:0;flex:1;max-width:46%;text-align:center}
+.body2 svg{height:min(330px,68vw);width:100%;display:block;margin:0 auto;stroke:var(--card);stroke-width:3;stroke-linejoin:round}
+.body2 .glow{filter:drop-shadow(0 0 10px color-mix(in srgb,var(--b-hi) 70%,transparent))}
+.body2 figcaption{font-size:12px;font-weight:600;color:var(--mute);margin-top:6px}
 </style>
 </head>
 <body class="enter">
@@ -341,6 +351,7 @@ body.evid-on main{display:none}
 <div id="print"></div>
 <script>setTimeout(()=>document.body.classList.remove("enter"),1600)</script>
 <script src="app.js"></script>
+<script src="body.js"></script>
 <script src="stats.js"></script>
 <script src="train.js"></script>
 <script src="swap.js"></script>
