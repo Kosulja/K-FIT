@@ -321,7 +321,7 @@ let BIP=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault(
 function installHelp(){if(BIP){BIP.prompt();BIP=null;return}sheet(`<div class="stack">${sheetHd('Instaliraj app')}<p><b>iPhone (Safari):</b> tipka Dijeli → „Dodaj na početni zaslon”.</p><p><b>Android (Chrome):</b> izbornik ⋮ → „Instaliraj aplikaciju”.</p><a class="btn ghost sm" href="instaliraj.html" target="_blank">Detaljne upute s koracima</a></div>`)}
 
 /* ============ PUSH OBAVIJESTI ============ */
-const APPV='38';
+const APPV='39';
 addEventListener('unhandledrejection',e=>{const m=e.reason&&(e.reason.message||e.reason);if(m&&ROLE=='client')toast('Greška: '+String(m).slice(0,120),5000)});
 const VAPID='BBGgvP78966HFRAiSQKynKAOdc-XHACULcCl9hrSWOCPmCL8Qka-fZ1QYroiuDOXvLRG4qP9-PtulVI2qQl_MiI';
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
@@ -360,7 +360,7 @@ function contactM(){const c=(ME&&ME.client)||{};const o=sheet(`<form class="stac
 <label class="f">Email<input class="inp" name="mail" type="email" value="${esc(c.em||'')}" autocomplete="email"></label>
 <label class="f">Adresa (za račun)<input class="inp" name="adr" value="${esc(c.adr||'')}" placeholder="Ulica i broj, poštanski broj, mjesto" autocomplete="street-address"></label>
 <div id="cfe" class="s" style="color:var(--bad)"></div><button class="btn acc full">${I('check','sm')} Spremi</button></form>`);
- o.querySelector('#cf').onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.querySelector('button');b.disabled=true;
+ o.querySelector('#cf').onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.querySelector('button.acc');b.disabled=true;
   const v={tel:f.tel.value.trim(),mail:f.mail.value.trim(),adr:f.adr.value.trim()};
   if(DEMO){Object.assign(c,{tel:v.tel,em:v.mail,adr:v.adr});close(o);toast('Spremljeno.');return render()}
   const{error}=await SB.rpc('kfit_contact',v);if(error){b.disabled=false;f.querySelector('#cfe').textContent=error.message;return}
