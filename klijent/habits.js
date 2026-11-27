@@ -57,3 +57,18 @@ function foodSection(L,P,coach){if(!hasFood(P))return '';const t=today(),days=[.
 <div class="grid3"><div class="card flat" style="padding:10px"><div class="xs mute">Upisanih dana</div><div class="b" style="font-size:20px">${got.length}/7</div></div><div class="card flat" style="padding:10px"><div class="xs mute">Prosj. kcal</div><div class="b" style="font-size:20px">${avg('kcal')||'–'}</div></div><div class="card flat" style="padding:10px"><div class="xs mute">Proteini ≥ 90%</div><div class="b" style="font-size:20px">${pOk} d</div></div></div>
 <div style="display:flex;gap:4px">${rows.map(r=>{const k=r.v.kcal,g=r.g.kcal,c=!k?'var(--soft)':Math.abs(k-g)<=g*.08?'var(--ok-soft)':'color-mix(in srgb,var(--warn) 30%,var(--soft))';return `<div style="flex:1;text-align:center" title="${fmt(r.d)}: ${k||'–'} / ${g} kcal"><div style="height:30px;border-radius:8px;display:grid;place-items:center;font-size:14px;font-weight:700;background:${c}">${k?Math.round(k/100)/10+'k':'·'}</div><span class="xs mute">${WD[wdi(r.d)][0]}${r.g.train?'•':''}</span></div>`}).join('')}</div>
 <p class="xs mute">• = dan treninga. Zeleno = unutar ±8% cilja kalorija.</p></div>`}
+
+/* ---------- dnevni ciljevi: obavijest kad klijent pogodi proteine, makrose, kalorije, vodu, korake ---------- */
+function dayHits(d,P=PROG,L=LOGS){const g=foodGoal(d,P,L),v=foodOf(d,L),H=[],near=(x,t,tol)=>t&&x!=null&&x!==''&&Math.abs(+x-t)<=t*tol;
+ if(hasFood()){if(g.p&&+v.p>=g.p*.95)H.push(['p','Proteini',`${v.p} / ${g.p} g`]);
+  if(near(v.kcal,g.kcal,.07))H.push(['kcal','Kalorije',`${(+v.kcal).toLocaleString('hr')} / ${g.kcal.toLocaleString('hr')} kcal`]);
+  if(near(v.c,g.c,.1))H.push(['c','Ugljikohidrati',`${v.c} / ${g.c} g`]);if(near(v.f,g.f,.1))H.push(['f','Masti',`${v.f} / ${g.f} g`])}
+ const w=dayVal('water',d,'ml',L)||0,wg=+P.water||0;if(wg&&w>=wg)H.push(['water','Voda',`${(w/1000).toLocaleString('hr')} L`]);
+ const s=dayVal('steps',d,'n',L)||0,sg=+P.steps||0;if(sg&&s>=sg)H.push(['steps','Koraci',s.toLocaleString('hr')]);
+ const goals=(hasFood()?['p','kcal','c','f'].filter(k=>g[k]):[]).concat(wg?['water']:[],sg?['steps']:[]);
+ return{H,goals,all:goals.length>1&&goals.every(k=>H.some(h=>h[0]==k)),macros:hasFood()&&['p','kcal','c','f'].filter(k=>g[k]).length>0&&['p','kcal','c','f'].filter(k=>g[k]).every(k=>H.some(h=>h[0]==k))}}
+function goalCheck(){if(ROLE!='client'||!PROG)return;const t=today(),k='kfitk-hit-'+(CID||'')+'-'+t,seen=LS.get(k,[]),R=dayHits(t),nw=R.H.filter(h=>!seen.includes(h[0]));
+ if(!nw.length&&(!R.all||seen.includes('all')))return;
+ const ids=[...new Set([...seen,...R.H.map(h=>h[0])])];
+ if(R.all&&!seen.includes('all')){ids.push('all');LS.set(k,ids);confetti();sheet(`<div class="stack">${sheetHd('Savršen dan')}<p>Pogodio si sve današnje ciljeve. Tako se gradi rezultat.</p><div class="list">${R.H.map(h=>`<div class="row">${I('check')}<div style="flex:1"><b>${h[1]}</b></div><span class="mute tnum">${h[2]}</span></div>`).join('')}</div><button class="btn acc full" data-x>Super</button></div>`);return}
+ LS.set(k,ids);toast((nw.length==1?'Cilj pogođen: ':'Ciljevi pogođeni: ')+nw.map(h=>h[1]+' ('+h[2]+')').join(', '),3500)}

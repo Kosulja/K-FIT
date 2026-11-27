@@ -65,6 +65,7 @@ function badges(L=LOGS,prog=PROG){const S=bStats(L,prog),W=S.W,prs=W.reduce((a,r
   ['tv','Volumen u jednom treningu','bolt',maxVol,' kg',[['ton',5000,'5 tona','5 000 kg u jednom treningu'],['tv10',10000,'10 tona','10 000 kg u jednom treningu'],['tv15',15000,'15 tona','15 000 kg u jednom treningu']]],
   ['rp','Ponavljanja','play',S.reps,'',[['rp1k',1000,'Tisuću ponavljanja','1 000 ponavljanja ukupno'],['rp5k',5000,'Pet tisuća','5 000 ponavljanja ukupno'],['rp10k',10000,'Deset tisuća','10 000 ponavljanja ukupno'],['rp25k',25000,'Dvadeset pet tisuća','25 000 ponavljanja ukupno']]],
   ['stp','Koraci u danu','steps',stepsMax,'',[['steps10k',10000,'10k dan','10 000 koraka u danu'],['steps15k',15000,'15k dan','15 000 koraka u danu'],['steps20k',20000,'20k dan','20 000 koraka u danu']]]];
+ let macroDays=0,perfDays=0;try{[...new Set(L.filter(r=>/^(food|water|steps)$/.test(r.kind)).map(r=>r.day))].forEach(d=>{const R=dayHits(d,prog,L);if(R.macros)macroDays++;if(R.all)perfDays++})}catch(e){}
  const bp=S.bw?S.lift.bp/S.bw:0,sq=S.bw?S.lift.sq/S.bw:0,dl=S.bw?S.lift.dl/S.bw:0;
  const ONE=[['club100','Klub 100','100 kg na bilo kojoj vježbi sa šipkom','trophy',S.top,100],
   ['bwbp','Vlastita težina','Bench press s vlastitom težinom','scale',bp,1],['bwsq','Čučanj 1,5×','Čučanj s 1,5× vlastite težine','scale',sq,1.5],['bwdl','Mrtvo 2×','Mrtvo dizanje s 2× vlastite težine','scale',dl,2],
@@ -72,7 +73,7 @@ function badges(L=LOGS,prog=PROG){const S=bStats(L,prog),W=S.W,prs=W.reduce((a,r
   ['early','Ranoranilac','Trening započet prije 7 sati','sun',S.early,1],['night','Noćna smjena','Trening započet nakon 21 sat','moon',S.night,1],['wkend','Vikend ratnik','10 treninga vikendom','cal',S.wkend,10],
   ['variety','Svestran','25 različitih vježbi','grid',S.variety,25],['streak7','Tjedan bez pauze','7 dana zaredom s treningom ili ispunjenom vodom','flame',maxStreak(L,prog),7],
   ['water7','Hidriran','Cilj vode 7 dana zaredom','drop',waterRun(L,prog),7],['clean7','Tjedan po planu','7 dana zaredom bez odstupanja','check',cleanRun(L),7],['checkin4','Iskreno','4 tjedna check-ina','heart',ci,4],
-  ['photo1','Prva slika','Prve fotografije napretka','user',S.photos,1],['waist5','Minus 5 cm','5 cm manje u struku','body',S.waistDrop,5],
+  ['macro1','Pogođeni makrosi','Sve makronutrijente pogodio u jednom danu','check',macroDays,1],['macro7','Tjedan makrosa','7 dana s pogođenim makrosima','check',macroDays,7],['perfday','Savršen dan','Svi dnevni ciljevi u jednom danu: prehrana, voda i koraci','trophy',perfDays,1],['photo1','Prva slika','Prve fotografije napretka','user',S.photos,1],['waist5','Minus 5 cm','5 cm manje u struku','body',S.waistDrop,5],
   ['goalhalf','Pola puta','Pola puta do ciljane težine','scale',goalP,.5],['goal','Cilj!','Ciljana težina postignuta','scale',goalP,1]];
  const out=[];C.forEach(([cat,ct,ic,v,u,T])=>T.forEach(([id,need,tt,d],i)=>out.push({id,cat,ct,t:tt,d,ic,v:v||0,u,need,tier:T.length<2?2:Math.round(i*3/(T.length-1)),lvl:i,of:T.length,p:Math.min(1,(v||0)/need),on:(v||0)>=need})));
  ONE.forEach(([id,tt,d,ic,v,need])=>out.push({id,t:tt,d,ic,v:v||0,need,tier:2,p:Math.min(1,(v||0)/need),on:(v||0)>=need}));

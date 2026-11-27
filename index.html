@@ -105,6 +105,11 @@ textarea.inp{min-height:96px;resize:vertical}
 .card{box-shadow:inset 0 1px 0 rgb(255 255 255/.05),0 1px 0 rgb(0 0 0/.5),0 14px 34px -18px rgb(0 0 0/.85)}
 .btn-acc{background:linear-gradient(180deg,#ead08a,#cfa64a 48%,#a77f28)!important;color:#1a1408!important;box-shadow:inset 0 1px 0 rgb(255 255 255/.45),0 10px 22px -12px rgb(201 165 78/.7)}
 .sheet{box-shadow:0 -24px 60px -12px rgb(0 0 0/.65)}
+
+/* ugrađeni način */
+.emb .topbar,.emb #tabs{display:none!important}
+.emb #main{padding-top:14px;padding-bottom:28px}
+.emb-app{display:flex;align-items:center;gap:8px;width:100%;justify-content:center;margin-bottom:14px;padding:11px 14px;border-radius:10px;font-weight:600;border:1px solid var(--acc-mid);color:var(--acc);background:var(--acc-soft)}
 </style>
 
 <header class="topbar">
@@ -192,10 +197,14 @@ const grp=x=>{if(x.g)return x.g;const i=String(x.id),m=i.match(/^in(\d)_/);retur
 const catOpts=(none)=>{const cs=S.cat.filter(x=>x.a);return(none?[['','Bez paketa']]:[]).concat(GROUPS.map(g=>({g,o:cs.filter(x=>grp(x)==g).sort((a,b)=>a.d-b.d).map(x=>[x.id,x.n+' ('+eur(x.p)+')'])})).filter(g=>g.o.length))};
 const NAV=[['dash','Pregled','layout-dashboard'],['cl','Klijenti','users'],['cal','Kalendar','calendar-days'],['fin','Financije','wallet'],['cat','Paketi','package']];
 function go(v,id){if(LOCK)return;V=v;SEL=id||null;scrollTo(0,0);render()}
+/* ugrađeno u K-FIT aplikaciju (trenerski dio): bez vlastite trake, prima naredbe od roditelja */
+const EMB=new URLSearchParams(location.search).has('embed');
+if(EMB){const q=new URLSearchParams(location.search);V=q.get('v')||'dash';SEL=q.get('id')||null;document.documentElement.classList.add('emb');
+ addEventListener('message',e=>{if(e.origin!==location.origin)return;const d=e.data||{};if(d.go)go(d.go,d.id)})}
 function render(){if(LOCK)return;const on=k=>V==k||(V=='pr'&&k=='cl');
 $('#nav').innerHTML=NAV.map(([k,l,i])=>`<button class="${on(k)?'on':''}" onclick="go('${k}')">${IC(i,'w-4 h-4')}${l}</button>`).join('');
 $('#tabs').innerHTML=NAV.map(([k,l,i])=>`<button class="${on(k)?'on':''}" onclick="go('${k}')">${IC(i,'w-6 h-6')}<span>${l}</span></button>`).join('');
-$('#main').innerHTML=({dash:vDash,cl:vCl,pr:vPr,cal:vCal,fin:vFin,cat:vCat,set:vSet})[V]();icons();if(V=='fin')drawChart()}
+$('#main').innerHTML=({dash:vDash,cl:vCl,pr:vPr,cal:vCal,fin:vFin,cat:vCat,set:vSet})[V]();if(EMB){if(V=='pr'&&SEL)$('#main').insertAdjacentHTML('afterbegin',`<button class="emb-app" onclick="parent.postMessage({open:SEL},location.origin)">${IC('dumbbell','w-4 h-4')} Program, treninzi i aplikacija</button>`);try{parent.postMessage({at:V,id:SEL},location.origin)}catch(e){}}icons();if(V=='fin')drawChart()}
 /* KLIJENTI */
 const ST=['Aktivan','Neaktivan','Pauza'],SV=['Individualni trening','Online coaching','Paket treninga'];
 function newClM(){const cs=S.cat.filter(x=>x.a);
