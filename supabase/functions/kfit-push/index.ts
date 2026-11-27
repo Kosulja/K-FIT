@@ -32,10 +32,10 @@ function plannedOn(day: string, prog: any, logs: any[]) {
   return out;
 }
 
-async function send(subs: any[], msg: { title: string; body: string; tag: string }) {
+async function send(subs: any[], msg: { title: string; body: string; tag: string; url?: string }) {
   let n = 0;
   for (const s of subs) {
-    try { await webpush.sendNotification(s.sub, JSON.stringify({ ...msg, url: APP }), { TTL: 3600 }); n++; }
+    try { await webpush.sendNotification(s.sub, JSON.stringify({ url: APP, ...msg }), { TTL: 3600 }); n++; }
     catch (e: any) { if (e?.statusCode === 404 || e?.statusCode === 410) await fetch(`${URL_}/rest/v1/kfit_push?endpoint=eq.${encodeURIComponent(s.endpoint)}`, { method: 'DELETE', headers: H }); }
   }
   return n;
@@ -52,14 +52,27 @@ Deno.serve(async (req) => {
     if (body.test) {
       const u = await fetch(`${URL_}/auth/v1/user`, { headers: { apikey: KEY, Authorization: req.headers.get('authorization') || '' } });
       if (!u.ok) return new Response('Nisi prijavljen.', { status: 401, headers: CORS });
-      const uid = (await u.json()).id, L = await q(`kfit_links?user_id=eq.${uid}&select=client_id`);
-      if (!L.length) return new Response('Nema klijenta.', { status: 404, headers: CORS });
-      const subs = await q(`kfit_push?client_id=eq.${encodeURIComponent(L[0].client_id)}&select=endpoint,sub`);
+      const uid = (await u.json()).id, L = await q(`kfit_links?user_id=eq.${uid}&select=client_id`), Co = await q(`kfit_coaches?user_id=eq.${uid}&select=user_id`);
+      const cid = Co.length ? '__coach' : L[0]?.client_id;
+      if (!cid) return new Response('Nema klijenta.', { status: 404, headers: CORS });
+      const subs = await q(`kfit_push?client_id=eq.${encodeURIComponent(cid)}&select=endpoint,sub`);
       const n = await send(subs, { title: 'K-FIT', body: 'Obavijesti rade. Javit ćemo ti se kad nešto bude važno.', tag: 'test' });
       return new Response(JSON.stringify({ sent: n }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
     if (req.headers.get('x-cron') !== S.cron) return new Response('Zabranjeno.', { status: 403 });
+
+    // nova poruka u chatu → obavijest primatelju
+    if (body.msg) {
+      const M = await q(`kfit_msgs?id=eq.${+body.msg}&select=client_id,from_coach,body`);
+      if (!M.length) return new Response('{}');
+      const m = M[0], txt = String(m.body).replace(/\s+/g, ' ').slice(0, 140);
+      let subs: any[], title: string;
+      if (m.from_coach) { subs = await q(`kfit_push?client_id=eq.${encodeURIComponent(m.client_id)}&select=endpoint,sub`); title = 'Poruka od trenera'; }
+      else { subs = await q('kfit_push?client_id=eq.__coach&select=endpoint,sub'); const C = await q(`kdocs?col=eq.clients&id=eq.${encodeURIComponent(m.client_id)}&select=data`); const d = C[0]?.data || {}; title = `Poruka: ${[d.f, d.l].filter(Boolean).join(' ') || 'klijent'}`; }
+      const n = await send(subs, { title, body: txt, tag: 'chat-' + m.client_id, url: APP + (m.from_coach ? '#chat' : '#chat-' + m.client_id) } as any);
+      return new Response(JSON.stringify({ sent: n }), { headers: { 'Content-Type': 'application/json' } });
+    }
     const Z = zagreb(), force = body.hour != null ? +body.hour : Z.hour;
     const subs = await q('kfit_push?select=endpoint,client_id,sub');
     const byC: Record<string, any[]> = {};

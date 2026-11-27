@@ -384,6 +384,18 @@ h2{font-family:Amiri,Georgia,serif;font-style:italic;font-weight:400;font-size:2
 .wkmini .dots span.td{outline:1px solid var(--ink);outline-offset:1px}
 .qbar{height:4px;border-radius:2px;background:var(--soft);overflow:hidden}.qbar i{display:block;height:100%;background:var(--foil);transition:width .3s}
 .pwwrap{position:relative;display:block}.pwwrap .inp{padding-right:48px;width:100%}.pweye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:grid;place-items:center;border:0;background:none;color:var(--mute);cursor:pointer}
+
+/* poruke */
+#chatbtn{position:relative}#chatbtn .cnt{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.chat-ov .sheet{height:88vh;display:flex;flex-direction:column}
+.chatw{display:flex;flex-direction:column;height:100%;min-height:0;gap:10px}
+.chatl{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px;min-height:0}
+.msg{display:flex;flex-direction:column;max-width:82%}.msg.me{align-self:flex-end;align-items:flex-end}.msg.them{align-self:flex-start}
+.bub{padding:10px 13px;border-radius:16px;font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+.msg.me .bub{background:var(--foil);color:#1a1408;border-bottom-right-radius:5px}
+.msg.them .bub{background:var(--soft);border:1px solid var(--line);border-bottom-left-radius:5px}
+.mt{font-size:11px;color:var(--mute);margin-top:3px}
+.chatf{display:flex;gap:8px;align-items:flex-end;padding-bottom:env(safe-area-inset-bottom,0px)}.chatf .inp{flex:1;resize:none;min-height:44px}
 </style>
 </head>
 <body class="enter">
@@ -393,6 +405,7 @@ h2{font-family:Amiri,Georgia,serif;font-style:italic;font-weight:400;font-size:2
 <div id="print"></div>
 <script>setTimeout(()=>document.body.classList.remove("enter"),1600)</script>
 <script src="app.js"></script>
+<script src="chat.js"></script>
 <script src="body.js"></script>
 <script src="stats.js"></script>
 <script src="train.js"></script>
