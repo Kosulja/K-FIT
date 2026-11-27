@@ -299,6 +299,8 @@ ${k.t?`<div style="margin-top:12px"><div class="between s"><span class="mute">Is
 :`<div class="card empty">Nema aktivnog paketa. Za produljenje se javi treneru.</div>`}
 ${TR.length?`<div class="card"><h3 style="margin-bottom:10px">Zakazani treninzi s trenerom</h3><div class="list">${TR.map(x=>`<div class="between"><span class="b s">${WD[wdi(x.d)]} ${fmt(x.d)}</span><span class="s mute tnum">${esc(x.tm||'')}${x.du?' · '+x.du+' min':''}</span></div>`).join('')}</div></div>`:''}
 ${old.length?`<details class="card"><summary class="b s">Prijašnji paketi (${old.length})</summary><div class="list" style="margin-top:10px">${old.map(k=>`<div class="between s"><span>${esc(k.n)}</span><span class="mute">${fmt(k.s)} – ${fmt(k.e)}</span></div>`).join('')}</div></details>`:''}
+<h2 style="margin-top:6px">Moji podaci</h2>
+<div class="card stack" style="gap:10px">${[['Telefon',c.tel],['Email',c.em],['Adresa',c.adr]].map(([l,v])=>`<div class="between s"><span class="mute">${l}</span><span class="b" style="text-align:right;max-width:65%;overflow-wrap:anywhere">${v?esc(v):'<span class="mute">nije upisano</span>'}</span></div>`).join('')}<button class="btn ghost full" onclick="contactM()">${I('edit','sm')} Promijeni podatke</button></div>
 <h2 style="margin-top:6px">Postavke</h2>
 <div class="card"><div class="list">
 ${DEMO?`<div class="between"><div class="row" style="min-width:0">${I('file')}<div><div class="b s">Upitnik za nove klijente</div><div class="xs mute">samo u demu: vidi što novi klijent ispunjava</div></div></div><button class="btn sm acc" onclick="DROLE='new';enter()">Pogledaj</button></div>`:''}
@@ -319,7 +321,7 @@ let BIP=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault(
 function installHelp(){if(BIP){BIP.prompt();BIP=null;return}sheet(`<div class="stack">${sheetHd('Instaliraj app')}<p><b>iPhone (Safari):</b> tipka Dijeli → „Dodaj na početni zaslon”.</p><p><b>Android (Chrome):</b> izbornik ⋮ → „Instaliraj aplikaciju”.</p><a class="btn ghost sm" href="instaliraj.html" target="_blank">Detaljne upute s koracima</a></div>`)}
 
 /* ============ PUSH OBAVIJESTI ============ */
-const APPV='37';
+const APPV='38';
 addEventListener('unhandledrejection',e=>{const m=e.reason&&(e.reason.message||e.reason);if(m&&ROLE=='client')toast('Greška: '+String(m).slice(0,120),5000)});
 const VAPID='BBGgvP78966HFRAiSQKynKAOdc-XHACULcCl9hrSWOCPmCL8Qka-fZ1QYroiuDOXvLRG4qP9-PtulVI2qQl_MiI';
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
@@ -332,12 +334,12 @@ async function pushOn(){if(DEMO){toast('Obavijesti rade samo u pravoj prijavi.')
  const o=sheet(`<div class="stack">${sheetHd('Uključujem obavijesti')}<div class="list" id="pst"></div><div id="pend"></div></div>`),box=o.querySelector('#pst'),end=o.querySelector('#pend');
  const step=(t,ok)=>{box.insertAdjacentHTML('beforeend',`<div class="row" style="gap:10px">${ok===false?I('x','sm'):ok?I('check','sm'):I('clock','sm')}<span class="s">${t}</span></div>`)};
  const fail=(t,help)=>{step(t,false);end.innerHTML=`<p class="s mute" style="margin-top:6px">${help}</p><button class="btn ghost full" style="margin-top:10px" data-x>Zatvori</button>`;return false};
- const ua=navigator.userAgent,android=/Android/.test(ua),howTo=android?'Na Androidu: Postavke → Aplikacije → K-FIT (ili Chrome) → Obavijesti → Dopusti. Zatim ponovno uključi ovdje.':'Na iPhoneu: Postavke → Obavijesti → K-FIT → Dopusti obavijesti. Zatim ponovno uključi ovdje.';
+ const ua=navigator.userAgent,android=/Android/.test(ua),howTo=android?'Chrome je pitanje sakrio (tihe obavijesti). Otvori kosulja.github.io/K-FIT/klijent/ u Chromeu, dodirni ikonu lijevo od adrese → Dozvole → Obavijesti → Dopusti. Ili: Chrome → ⋮ → Postavke → Obavijesti → isključi „Tiše poruke”. Zatim se vrati ovdje i uključi ponovno.':'Na iPhoneu: Postavke → Obavijesti → K-FIT → Dopusti obavijesti. Zatim ponovno uključi ovdje.';
  if(!pushOk())return fail('Ovaj preglednik ne podržava obavijesti.',android?'Otvori aplikaciju u Chromeu ili je instaliraj na početni zaslon.':'Otvori K-FIT s ikone na početnom zaslonu.');
  step('Tražim dozvolu za obavijesti…');
  let p=Notification.permission;
- if(p!='granted'){try{p=await Promise.race([new Promise(r=>{try{const x=Notification.requestPermission(r);if(x&&x.then)x.then(r)}catch(e){r('denied')}}),new Promise(r=>setTimeout(()=>r('timeout'),20000))])}catch(e){p='denied'}}
- if(p=='timeout')return fail('Mobitel nije prikazao pitanje za dozvolu.',howTo);
+ if(p!='granted'){try{p=await Promise.race([new Promise(r=>{try{const x=Notification.requestPermission(r);if(x&&x.then)x.then(r)}catch(e){r('denied')}}),new Promise(r=>setTimeout(()=>r('timeout'),8000))])}catch(e){p='denied'}}
+ if(p=='timeout'||p=='default')return fail('Mobitel nije prikazao pitanje za dozvolu.',howTo);
  if(p!='granted')return fail(p=='denied'?'Obavijesti su blokirane na ovom mobitelu.':'Dozvola nije dana.',howTo);
  step('Dozvola dana.',true);
  try{let reg=await navigator.serviceWorker.getRegistration();if(!reg)reg=await navigator.serviceWorker.register('sw.js');
@@ -351,3 +353,15 @@ async function pushOff(){try{const reg=await navigator.serviceWorker.ready,s=awa
 async function pushTest(){try{const{data:{session}}=await SB.auth.getSession();const r=await fetch(CFG.url+'/functions/v1/kfit-push',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token,apikey:CFG.key},body:'{"test":true}'});const j=await r.json();toast(j.sent?'Probna obavijest poslana.':'Nema uređaja s uključenim obavijestima.')}catch(e){toast('Slanje nije uspjelo.')}}
 function pushRow(){const st=pushState(),on=st=='on';
  return `<div class="between"><div class="row" style="min-width:0">${I('bell')}<div style="min-width:0"><div class="b s">Obavijesti</div><div class="xs mute">${st=='denied'?'blokirane u postavkama mobitela':st=='install'?'dodaj aplikaciju na početni zaslon':'trening, kraj odmora, podsjetnik u 18 h, plan nedjeljom'}</div></div></div>${on?`<div class="row" style="gap:6px"><button class="btn sm ghost" onclick="pushTest()">Proba</button><button class="tgl on" role="switch" aria-checked="true" onclick="pushOff().then(()=>keepScroll(render))"></button></div>`:`<button class="tgl" role="switch" aria-checked="false" onclick="pushOn()"></button>`}</div>`}
+
+/* klijent mijenja telefon, email i adresu (trener vidi promjenu u evidenciji) */
+function contactM(){const c=(ME&&ME.client)||{};const o=sheet(`<form class="stack" id="cf">${sheetHd('Moji podaci')}
+<label class="f">Telefon<input class="inp" name="tel" type="tel" value="${esc(c.tel||'')}" autocomplete="tel"></label>
+<label class="f">Email<input class="inp" name="mail" type="email" value="${esc(c.em||'')}" autocomplete="email"></label>
+<label class="f">Adresa (za račun)<input class="inp" name="adr" value="${esc(c.adr||'')}" placeholder="Ulica i broj, poštanski broj, mjesto" autocomplete="street-address"></label>
+<div id="cfe" class="s" style="color:var(--bad)"></div><button class="btn acc full">${I('check','sm')} Spremi</button></form>`);
+ o.querySelector('#cf').onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.querySelector('button');b.disabled=true;
+  const v={tel:f.tel.value.trim(),mail:f.mail.value.trim(),adr:f.adr.value.trim()};
+  if(DEMO){Object.assign(c,{tel:v.tel,em:v.mail,adr:v.adr});close(o);toast('Spremljeno.');return render()}
+  const{error}=await SB.rpc('kfit_contact',v);if(error){b.disabled=false;f.querySelector('#cfe').textContent=error.message;return}
+  Object.assign(c,{tel:v.tel,em:v.mail,adr:v.adr});close(o);toast('Spremljeno. Trener vidi nove podatke.');keepScroll(render)}}
