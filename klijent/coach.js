@@ -13,12 +13,14 @@ function coachGo(k,id){COACH.top=k;if(k=='cl'){COACH.sel=null;evidHide();return 
 function evidHide(){const f=$('#evid');if(f)f.style.display='none';document.body.classList.remove('evid-on')}
 function openEvid(v,id){COACH.top=v=='pr'||v=='set'?COACH.top||'cl':v;if(v=='pr')COACH.top='cl';
  shell('',coachTabs());let f=$('#evid');const src='../?embed=1&v='+v+(id?'&id='+encodeURIComponent(id):'');
- if(!f||DEMO){f&&f.remove();f=document.createElement('iframe');f.id='evid';f.title='Evidencija';f.src=DEMO?'about:blank':src;document.body.appendChild(f);if(DEMO)f.srcdoc='<body style="margin:0;background:#0c0c0b"><p style="font:16px system-ui;padding:24px;color:#999">Evidencija (kalendar, paketi, uplate) radi samo u pravoj prijavi, ne u demou.</p>'}
+ if(!f||DEMO){f&&f.remove();f=document.createElement('iframe');f.id='evid';f.title='Evidencija';f.onload=()=>{evidAuth(f);evidFit()};f.src=DEMO?'about:blank':src;document.body.appendChild(f);if(DEMO)f.srcdoc='<body style="margin:0;background:#0c0c0b"><p style="font:16px system-ui;padding:24px;color:#999">Evidencija (kalendar, paketi, uplate) radi samo u pravoj prijavi, ne u demou.</p>'}
  else{f.style.display='';try{f.contentWindow.postMessage({go:v,id},location.origin)}catch(e){f.src=src}}
- f.style.display='';document.body.classList.add('evid-on');evidFit()}
-function evidFit(){const f=$('#evid');if(!f)return;const t=$('#top'),b=$('#tabs');f.style.top=(t?t.getBoundingClientRect().bottom:0)+'px';f.style.bottom=(b?innerHeight-b.getBoundingClientRect().top:0)+'px'}
+ f.style.display='';document.body.classList.add('evid-on');evidFit();setTimeout(evidFit,250);setTimeout(evidFit,1200)}
+function evidFit(){const f=$('#evid');if(!f)return;const t=$('#top'),b=$('#tabs');f.style.top=(t?Math.max(0,t.getBoundingClientRect().bottom):0)+'px';const bt=b&&b.offsetHeight?b.offsetHeight:64;f.style.bottom=bt+'px';f.style.height='auto'}
+addEventListener('load',()=>setTimeout(evidFit,300));
 addEventListener('resize',()=>{if(document.body.classList.contains('evid-on'))evidFit()});
-addEventListener('message',e=>{if(e.origin!==location.origin||ROLE!='coach')return;const d=e.data||{};if(d.open){const c=(COACH.list||[]).find(x=>x.id==d.open);if(c){COACH.top='cl';evidHide();openClient(d.open)}}});
+async function evidAuth(f){try{const{data:{session}}=await SB.auth.getSession();if(session&&f.contentWindow)f.contentWindow.postMessage({auth:{access_token:session.access_token,refresh_token:session.refresh_token}},location.origin)}catch(e){}}
+addEventListener('message',e=>{if(e.origin!==location.origin||ROLE!='coach')return;const d=e.data||{};if(d.needAuth){const f=$('#evid');if(f)evidAuth(f);return}if(d.open){const c=(COACH.list||[]).find(x=>x.id==d.open);if(c){COACH.top='cl';evidHide();openClient(d.open)}}});
 function coachRender(){if(COACH.top&&COACH.top!='cl')return openEvid(COACH.top);evidHide();if(COACH.sel)return coachClient();
  const L=COACH.list,on=L.filter(c=>COACH.links[c.id]),off=L.filter(c=>!COACH.links[c.id]),live=on.filter(c=>isLive(COACH.act[c.id]));
  const card=c=>{const a=COACH.act[c.id]||[],lw=a.filter(r=>r.kind=='workout').length,last=a.filter(r=>r.kind!='live'&&r.kind!='settings'&&r.kind!='move').map(r=>r.day).sort().pop(),ci=a.find(r=>r.kind=='checkin'&&r.day>=addD(today(),-6)),lv=isLive(a);

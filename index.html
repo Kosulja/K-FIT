@@ -208,7 +208,9 @@ function go(v,id){if(LOCK)return;V=v;SEL=id||null;scrollTo(0,0);render()}
 /* ugrađeno u K-FIT aplikaciju (trenerski dio): bez vlastite trake, prima naredbe od roditelja */
 const EMB=new URLSearchParams(location.search).has('embed');
 if(EMB){const q=new URLSearchParams(location.search);V=q.get('v')||'dash';SEL=q.get('id')||null;document.documentElement.classList.add('emb');
- addEventListener('message',e=>{if(e.origin!==location.origin)return;const d=e.data||{};if(d.go)go(d.go,d.id)})}
+ addEventListener('message',async e=>{if(e.origin!==location.origin)return;const d=e.data||{};
+  if(d.auth&&!SESS){try{const{data,error}=await SB.auth.setSession(d.auth);if(!error&&data.session){SESS=data.session;LOCK=false;setSt('load');await initDb();go(V,SEL)}}catch(x){console.error(x)}return}
+  if(d.go)go(d.go,d.id)})}
 function render(){if(LOCK)return;const on=k=>V==k||(V=='pr'&&k=='cl');
 $('#nav').innerHTML=NAV.map(([k,l,i])=>`<button class="${on(k)?'on':''}" onclick="go('${k}')">${IC(i,'w-4 h-4')}${l}</button>`).join('');
 $('#tabs').innerHTML=NAV.map(([k,l,i])=>`<button class="${on(k)?'on':''}" onclick="go('${k}')">${IC(i,'w-6 h-6')}<span>${l}</span></button>`).join('');
@@ -367,6 +369,7 @@ async function logout(){try{await SB.auth.signOut()}catch(e){}try{localStorage.r
 setSt('load');$('#main').innerHTML='<div class="text-mute py-16 text-center">Učitavanje…</div>';icons();
 (async()=>{if(!SB){LOCK=true;$('#main').innerHTML='<div class="card p-8 text-center">Ne mogu učitati Supabase biblioteku. Provjeri internet i osvježi stranicu.</div>';return}
 let r=null;try{r=(await SB.auth.getSession()).data.session}catch(e){}SESS=r;
+if(!SESS&&EMB){$('#main').innerHTML='<div class="text-mute py-16 text-center">Učitavanje…</div>';try{parent.postMessage({needAuth:1},location.origin)}catch(e){}setTimeout(()=>{if(!SESS)showLogin()},6000);return}
 if(!SESS){showLogin();return}
 await initDb()})();
 let seen={},booted=false,SUBD=false;
