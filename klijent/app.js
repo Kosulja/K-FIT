@@ -27,7 +27,7 @@ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',drop:
 plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',check:'<path d="m5 12 5 5 9-10"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',up:'<path d="m6 15 6-6 6 6"/>',down:'<path d="m6 9 6 6 6-6"/>',
 chev:'<path d="m9 6 6 6-6 6"/>',back:'<path d="m15 6-6 6 6 6"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
 steps:'<path d="M5 17c0-3 .6-8 3.2-8S10 13 10 15s-1 4-2.6 4S5 18.3 5 17zM19 12c0-3-.6-8-3.2-8S14 8 14 10s1 4 2.6 4S19 13.3 19 12z"/>',
-scale:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 10a5 5 0 0 1 8 0l-3 2.5"/>',download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',wallet:'<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+scale:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 10a5 5 0 0 1 8 0l-3 2.5"/>',download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',wallet:'<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
 users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2 .6 3.5 2.3 3.5 5.2"/>',
 edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
 msg:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',flame:'<path d="M12 22a7 7 0 0 0 7-7c0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-3 3-5 5-5 8a7 7 0 0 0 7 7z"/>',
@@ -244,21 +244,19 @@ function homeView(){const c=(ME&&ME.client)||{},h=new Date().getHours(),hi=h<11?
  else if(T.day)tw=`<div class="kick">Današnji trening${T.moved?' · premješten':''}</div><h2 style="margin:4px 0 2px">${esc(T.day.name)}</h2><p class="s mute">${T.day.ex.length} vježbi, ${T.day.ex.reduce((s,e)=>s+(+e.s||1),0)} serija, oko ${estMin(T.day)} min</p><button class="btn acc full" style="margin-top:12px" onclick="startW('${T.day.id}')">${I('play')} Kreni s treningom</button>`;
  else if((PROG.days||[]).length)tw=`<div class="kick">Danas</div><h2 style="margin-top:4px">Dan odmora</h2><p class="s mute">Šetnja, istezanje i dovoljno vode.${T.next?' Sljedeće: <b>'+esc(T.next.day.name)+'</b> ('+WD[wdi(T.next.date)]+')':''}</p><button class="btn ghost full" style="margin-top:12px" onclick="go('train')">Ipak treniraj ili premjesti trening</button>`;
  else tw=`<div class="kick">Program</div><h2 style="margin-top:4px">Uskoro stiže</h2><p class="s mute">Trener ti priprema program. Do tada možeš pratiti vodu, korake i težinu.</p>`;
+ const ex=expiryCard(),pc=planCard(),ci=ciDue&&wdi(today())>=4?`<button class="card tap" onclick="checkinM()">${I('heart')}<div style="flex:1"><div class="b">Tjedni check-in</div><p class="s mute">2 minute: san, energija, apetit, bilješka za trenera</p></div>${I('chev')}</button>`:'';
+ const weekMini=(PROG.days||[]).length?`<div class="wkmini"><span class="xs mute">Ovaj tjedan <b style="color:var(--ink)">${done} / ${plan||'—'}</b>${st>1?` · niz ${st} dana`:''}</span><div class="dots">${WD.map((w,i)=>{const d=addD(monday(),i),has=byKind('workout').some(r=>r.day==d),pl=wk.some(x=>x.date==d&&!x.done);return `<span class="${has?'on':pl?'pl':''} ${d==today()?'td':''}">${w[0]}</span>`}).join('')}</div></div>`:'';
  return `<div class="stack">
-${expiryCard()}
-${planCard()}${(planNudge(),'')}
-<div><div class="kick">${new Date().toLocaleDateString('hr-HR',{weekday:'long',day:'numeric',month:'long'}).replace(/^./,x=>x.toUpperCase())}</div><h1 style="margin-top:4px">${hi}${c.f?', '+esc(c.f):''}</h1></div>
+${ex||pc||ci}${(planNudge(),'')}
+<div><div class="kick">${new Date().toLocaleDateString('hr-HR',{weekday:'long',day:'numeric',month:'long'}).replace(/^./,x=>x.toUpperCase())}</div><h1 style="margin-top:6px">${hi}${c.f?', '+esc(c.f):''}</h1></div>
 ${PROG.msg?`<div class="card hero"><div class="row" style="align-items:flex-start">${I('msg')}<div><div class="kick" style="color:var(--acc)">Poruka trenera</div><p style="margin-top:4px;white-space:pre-line">${esc(PROG.msg)}</p><div class="sig">— ${esc(CFG.coach)}</div></div></div></div>`:''}
-<div class="card ${T.day&&!T.done?'hero':''}">${tw}</div>
+<div class="card ${T.day&&!T.done?'hero':''}">${tw}${weekMini}</div>
+<div class="kick" style="margin:8px 0 -4px">Danas</div>
 ${foodCard()}
 ${waterCard()}
-<div class="grid2">${statCard('steps','Koraci danas',dayVal('steps',today(),'n'),PROG.steps?'cilj '+PROG.steps.toLocaleString('hr-HR'):'','logSteps()')}${statCard('scale','Težina',lastW()?n1(lastW().data.kg)+' kg':null,goalLine(),'logWeight()')}</div>
-<div class="card"><div class="between"><div><div class="kick">Ovaj tjedan</div><div class="big" style="margin-top:6px">${done}<span class="mute" style="font-size:20px"> / ${plan||'—'}</span></div><p class="xs mute">treninga</p></div>
-<div style="text-align:right"><div class="kick">Niz</div><div class="big" style="margin-top:6px;color:var(--acc)">${st}</div><p class="xs mute">${st==1?'dan':'dana'} zaredom</p></div></div>
-<div style="display:flex;gap:4px;margin-top:12px">${WD.map((w,i)=>{const d=addD(monday(),i),has=byKind('workout').some(r=>r.day==d),pl=wk.some(x=>x.date==d&&!x.done);return `<div style="flex:1;text-align:center"><i style="display:block;height:8px;border-radius:4px;background:${has?'var(--acc)':pl?'var(--acc-mid)':'var(--soft)'};opacity:${pl&&!has?.5:1}"></i><span class="xs mute">${w[0]}</span></div>`}).join('')}</div></div>
-${nx?`<div class="card"><div class="row">${I('cal')}<div style="flex:1"><div class="kick">Sljedeći trening s trenerom</div><p class="b" style="margin-top:2px">${WD[wdi(nx.d)]} ${fmt(nx.d)} · ${esc(nx.tm||'')}</p></div><span class="chip">${daysTo(nx.d)==0?'danas':daysTo(nx.d)==1?'sutra':'za '+daysTo(nx.d)+' d'}</span></div></div>`:''}
+<div class="grid2">${statCard('steps','Koraci',dayVal('steps',today(),'n'),PROG.steps?'cilj '+PROG.steps.toLocaleString('hr-HR'):'','logSteps()')}${statCard('scale','Težina',lastW()?n1(lastW().data.kg)+' kg':null,goalLine(),'logWeight()')}</div>
 ${slipsFold()}
-${ciDue?`<button class="card tap" onclick="checkinM()">${I('heart')}<div style="flex:1"><div class="b">Tjedni check-in</div><p class="s mute">2 minute: san, energija, apetit, bilješka za trenera</p></div>${I('chev')}</button>`:''}
+${nx&&daysTo(nx.d)<=2?`<div class="card"><div class="row">${I('cal')}<div style="flex:1"><div class="kick">Trening s trenerom</div><p class="b" style="margin-top:2px">${WD[wdi(nx.d)]} ${fmt(nx.d)} · ${esc(nx.tm||'')}</p></div><span class="chip">${daysTo(nx.d)==0?'danas':daysTo(nx.d)==1?'sutra':'za '+daysTo(nx.d)+' d'}</span></div></div>`:''}
 </div>`}
 function goalLine(){const s=setts(),w=lastW();if(!w)return'';if(s.goalKg){const d=+w.data.kg-s.goalKg;return Math.abs(d)<.05?'cilj postignut!':'do cilja '+n1(Math.abs(d))+' kg'}return w.day==today()?'danas':fmt(w.day)}
 function statCard(i,l,v,sub,fn){return `<button class="card tap" style="display:block" onclick="${fn}"><div class="between"><span class="kick">${l}</span>${I(i,'sm')}</div><div class="big" style="margin-top:8px;font-size:28px">${v==null?'<span class="mute">—</span>':typeof v=='number'?v.toLocaleString('hr-HR'):v}</div><p class="xs mute" style="margin-top:2px">${sub?sub+' · ':''}<span style="color:var(--acc)">upiši</span></p></button>`}
@@ -304,6 +302,7 @@ ${old.length?`<details class="card"><summary class="b s">Prijašnji paketi (${ol
 <h2 style="margin-top:6px">Postavke</h2>
 <div class="card"><div class="list">
 ${DEMO?`<div class="between"><div class="row" style="min-width:0">${I('file')}<div><div class="b s">Upitnik za nove klijente</div><div class="xs mute">samo u demu: vidi što novi klijent ispunjava</div></div></div><button class="btn sm acc" onclick="DROLE='new';enter()">Pogledaj</button></div>`:''}
+${pushRow()}
 ${row('msg','Jezik naziva vježbi','HR ili EN. Drugi naziv je sitno ispod',langSeg())}
 ${row('scale','Ciljana težina',s.goalKg?n1(s.goalKg)+' kg':'nije postavljena',`<button class="btn sm" onclick="goalM()">${s.goalKg?'Promijeni':'Postavi'}</button>`)}
 ${row('sun','Ekran ostaje upaljen','dok traje trening',tg(s.wake,"saveSet({wake:!setts().wake}).then(()=>keepScroll(render))"))}
@@ -319,3 +318,21 @@ function download(name,text,type='application/json'){const u=URL.createObjectURL
 function exportData(){download('kfit-moji-podaci-'+today()+'.json',JSON.stringify({izvoz:new Date().toISOString(),program:PROG,unosi:LOGS},null,1));toast('Datoteka preuzeta.')}
 let BIP=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();BIP=e});
 function installHelp(){if(BIP){BIP.prompt();BIP=null;return}sheet(`<div class="stack">${sheetHd('Instaliraj app')}<p><b>iPhone (Safari):</b> tipka Dijeli → „Dodaj na početni zaslon”.</p><p><b>Android (Chrome):</b> izbornik ⋮ → „Instaliraj aplikaciju”.</p><a class="btn ghost sm" href="instaliraj.html" target="_blank">Detaljne upute s koracima</a></div>`)}
+
+/* ============ PUSH OBAVIJESTI ============ */
+const VAPID='BBGgvP78966HFRAiSQKynKAOdc-XHACULcCl9hrSWOCPmCL8Qka-fZ1QYroiuDOXvLRG4qP9-PtulVI2qQl_MiI';
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const pushOk=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+const b64u=s=>{const p='='.repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0))};
+function pushState(){if(!pushOk())return/iPhone|iPad/.test(navigator.userAgent)&&!standalone()?'install':'no';return Notification.permission=='granted'&&LS.get('kfitk-push',0)?'on':Notification.permission=='denied'?'denied':'off'}
+async function pushOn(){if(DEMO){toast('Obavijesti rade samo u pravoj prijavi.');return false}
+ const st=pushState();if(st=='install'){sheet(`<div class="stack">${sheetHd('Prvo instaliraj aplikaciju')}<p class="s mute">Na iPhoneu obavijesti rade samo kad je K-FIT dodan na početni zaslon. U Safariju dodirni Dijeli → Dodaj na početni zaslon, otvori K-FIT s ikone i uključi obavijesti.</p><button class="btn ghost full" data-x>U redu</button></div>`);return false}
+ if(st=='no'){toast('Ovaj preglednik ne podržava obavijesti.');return false}
+ try{const p=await Notification.requestPermission();if(p!='granted'){toast('Obavijesti nisu dopuštene. Možeš ih uključiti u postavkama mobitela.');return false}
+  const reg=await navigator.serviceWorker.ready;let s=await reg.pushManager.getSubscription();if(!s)s=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID)});
+  const{error}=await SB.rpc('kfit_push_save',{s:s.toJSON()});if(error)throw error;LS.set('kfitk-push',1);toast('Obavijesti su uključene.');return true}
+ catch(e){console.error(e);toast('Uključivanje nije uspjelo: '+(e.message||e));return false}}
+async function pushOff(){try{const reg=await navigator.serviceWorker.ready,s=await reg.pushManager.getSubscription();if(s){await SB.rpc('kfit_push_del',{ep:s.endpoint});await s.unsubscribe()}}catch(e){}LS.del('kfitk-push');toast('Obavijesti su isključene.')}
+async function pushTest(){try{const{data:{session}}=await SB.auth.getSession();const r=await fetch(CFG.url+'/functions/v1/kfit-push',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token,apikey:CFG.key},body:'{"test":true}'});const j=await r.json();toast(j.sent?'Probna obavijest poslana.':'Nema uređaja s uključenim obavijestima.')}catch(e){toast('Slanje nije uspjelo.')}}
+function pushRow(){const st=pushState(),on=st=='on';
+ return `<div class="between"><div class="row" style="min-width:0">${I('bell')}<div style="min-width:0"><div class="b s">Obavijesti</div><div class="xs mute">${st=='denied'?'blokirane u postavkama mobitela':st=='install'?'dodaj aplikaciju na početni zaslon':'trening ujutro, podsjetnik u 18 h, plan nedjeljom'}</div></div></div>${on?`<div class="row" style="gap:6px"><button class="btn sm ghost" onclick="pushTest()">Proba</button><button class="tgl on" role="switch" aria-checked="true" onclick="pushOff().then(()=>keepScroll(render))"></button></div>`:`<button class="tgl" role="switch" aria-checked="false" onclick="pushOn().then(()=>keepScroll(render))"></button>`}</div>`}

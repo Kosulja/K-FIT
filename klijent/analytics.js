@@ -94,7 +94,7 @@ function badgeM(key){const[L,prog]=window.BADGES_L||[LOGS,PROG],B=badges(L,prog)
 <div class="list">${list.map(b=>`<div class="row" style="gap:12px">${medal(b)}<div style="flex:1;min-width:0"><div class="b">${esc(b.t)}${b.cat?` <span class="xs mute">· ${TIERN[b.tier]}</span>`:''}</div><div class="xs mute">${esc(b.d)}</div>${b.on?'':`<div class="bar" style="height:5px;margin-top:6px"><i style="width:${b.p*100}%"></i></div>`}</div>${b.on&&ROLE!='coach'?`<button class="btn sm ghost" onclick="shareBadge('${b.id}')">${I('share','sm')} Podijeli</button>`:b.on?I('check'):''}</div>`).join('')}</div></div>`)}
 /* slika za Instagram story (1080×1920) */
 async function shareBadge(id){const b=badges().find(x=>x.id==id);if(!b)return;const W=1080,H=1920,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
- try{await Promise.all(['400 120px Michroma','600 44px "Hanken Grotesk"','500 46px "Hanken Grotesk"'].map(f=>document.fonts.load(f)))}catch(e){}
+ try{await Promise.all(['400 120px Michroma','italic 400 120px Amiri','600 44px "Hanken Grotesk"','500 46px "Hanken Grotesk"'].map(f=>document.fonts.load(f)))}catch(e){}
  const bg=x.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#141311');bg.addColorStop(1,'#060605');x.fillStyle=bg;x.fillRect(0,0,W,H);
  const gl=x.createRadialGradient(W/2,760,40,W/2,760,560);gl.addColorStop(0,'rgba(214,178,94,.28)');gl.addColorStop(1,'rgba(214,178,94,0)');x.fillStyle=gl;x.fillRect(0,0,W,H);
  const gold=x.createLinearGradient(0,0,W,0);gold.addColorStop(0,'#a77f28');gold.addColorStop(.5,'#f0d896');gold.addColorStop(1,'#b8902f');
@@ -103,7 +103,7 @@ async function shareBadge(id){const b=badges().find(x=>x.id==id);if(!b)return;co
  const cx=W/2,cy=760,R=250;x.beginPath();x.arc(cx,cy,R,0,7);x.fillStyle='#1b1a17';x.fill();x.lineWidth=18;x.strokeStyle=b.cat?TIERC[b.tier]:'#d6b25e';x.stroke();
  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="260" height="260" fill="none" stroke="#e9cf83" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${P[b.ic]||''}</svg>`;
  await new Promise(r=>{const im=new Image();im.onload=()=>{x.drawImage(im,cx-130,cy-130,260,260);r()};im.onerror=r;im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});
- x.fillStyle=gold;let fs=110;x.font=`400 ${fs}px Michroma,sans-serif`;const tt=b.t.toUpperCase();while(x.measureText(tt).width>W-120&&fs>50){fs-=6;x.font=`400 ${fs}px Michroma,sans-serif`}x.fillText(tt,W/2,1170);
+ x.fillStyle=gold;const tt0=b.t;let fs=150;x.font=`italic 400 ${fs}px Amiri,serif`;const tt=b.t;while(x.measureText(tt).width>W-120&&fs>50){fs-=6;x.font=`italic 400 ${fs}px Amiri,serif`}x.fillText(tt,W/2,1170);
  x.fillStyle='#d9d6cc';x.font='500 46px "Hanken Grotesk",sans-serif';const words=b.d.split(' ');let line='',y=1260;words.forEach(w=>{if(x.measureText(line+w).width>W-200){x.fillText(line.trim(),W/2,y);line='';y+=62}line+=w+' '});x.fillText(line.trim(),W/2,y);
  if(b.cat){x.fillStyle='#9d9a90';x.font='600 38px "Hanken Grotesk",sans-serif';x.fillText(b.ct+' · '+TIERN[b.tier],W/2,y+90)}
  x.fillStyle='#9d9a90';x.font='600 40px "Hanken Grotesk",sans-serif';x.fillText('Online coaching · @kosulja98',W/2,H-150);

@@ -40,7 +40,7 @@ ${W.map(t=>`<div class="card flat row" style="padding:10px 12px;border-color:var
 function planDoneM(mon){const W=weekItems(mon).filter(x=>x.date).sort((a,b)=>a.date.localeCompare(b.date));
  sheet(`<div class="stack">${sheetHd('Plan spremljen')}<div class="list">${W.map(x=>`<div class="row" style="gap:12px"><div class="av" style="font-size:13px">${WD[wdi(x.date)]}</div><div style="flex:1"><div class="b s">${esc(x.day.name)}</div><div class="xs mute">${fmt(x.date)}</div></div></div>`).join('')}</div>
 <p class="s mute" style="margin:0">Trener vidi tvoj plan. Ako nešto iskrsne, trening možeš premjestiti u kartici Trening.</p>
-<button class="btn acc full" onclick="calM()">${I('cal','sm')} Dodaj u kalendar mobitela</button><button class="btn ghost full" data-x>Gotovo</button></div>`)}
+${pushState()!='on'&&pushState()!='no'?`<button class="btn acc full" onclick="pushOn()">${I('bell','sm')} Uključi obavijesti</button>`:''}<button class="btn ${pushState()!='on'&&pushState()!='no'?'ghost':'acc'} full" onclick="calM()">${I('cal','sm')} Dodaj u kalendar mobitela</button><button class="btn ghost full" data-x>Gotovo</button></div>`)}
 /* pretplata na kalendar: Apple (webcal) i Google; kalendar se sam osvježava i podsjeća */
 let CALTOK=null;
 async function calM(){if(DEMO){sheet(`<div class="stack">${sheetHd('Kalendar mobitela')}<p class="s mute">U pravoj aplikaciji ovdje se treninzi jednim dodirom dodaju u Apple ili Google kalendar, zajedno s podsjetnikom za planiranje svake nedjelje.</p><button class="btn ghost full" data-x>U redu</button></div>`);return}

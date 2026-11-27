@@ -33,15 +33,27 @@ function onboardView(o={}){const dr=LS.get('kfitk-q',{}),v={...(o.pre||{}),...dr
  const pair=fs=>{const out=[];for(let i=0;i<fs.length;i++){const f=fs[i],n=fs[i+1],short=x=>x&&['text','tel','date','num','age','email'].includes(x[2])&&!['loc','em'].includes(x[0])&&!/Koliko|kalorija/.test(x[1]);
   if(short(f)&&short(n)){out.push(`<div class="grid2">${fld(f)}${fld(n)}</div>`);i++}else out.push(fld(f))}return out.join('')};
  shell(`<form id="qf" class="stack" novalidate><div><div class="kick" style="color:var(--acc)">Dobrodošao u K-FIT</div><h1 style="margin-top:6px">Prije početka</h1>
-<p class="mute" style="margin-top:8px">Ovo je jednokratni upitnik. Treba ti oko 3 minute. Na temelju odgovora trener ti slaže program. Što iskrenije, to bolje.</p></div>
+<p class="mute" style="margin-top:8px">Ovo je jednokratni upitnik u nekoliko kratkih koraka. Na temelju odgovora trener ti slaže program. Što iskrenije, to bolje.</p></div>
 ${QF.map(([t,fs,intro],i)=>`<div class="card stack"><div class="between"><h3>${t}</h3><span class="xs mute">${i+1}/${QF.length+1}</span></div>${intro?`<p class="xs mute">${intro}</p>`:''}${pair(fs)}</div>`).join('')}
-<div class="card stack" id="qph"><div class="between"><h3>Fotografije <span style="color:var(--acc)">*</span></h3><span class="xs mute">${QF.length+1}/${QF.length+1}</span></div>${PH_HINT}<div id="phs">${photoTiles(PHS)}</div></div>
+<div class="card stack" id="qph"><div class="between"><h3>Fotografije</h3><span class="xs mute">${QF.length+1}/${QF.length+1}</span></div>${PH_HINT}<div id="phs">${photoTiles(PHS)}</div></div>
 <label class="card row s" style="align-items:flex-start;gap:12px"><input type="checkbox" name="ok" ${v.ok=='da'?'checked':''} style="width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--acc)"><span>Pristajem da trener koristi ove podatke, uključujući one o zdravlju i fotografije, isključivo za izradu i praćenje mog programa. Pročitao/la sam <a href="privatnost.html" target="_blank" style="color:var(--acc)">politiku privatnosti i uvjete</a>. <span style="color:var(--acc)">*</span></span></label>
 <label class="f" id="qpar" ${isMinor(v.bd)?'':'hidden'}>Mlađi si od 16, pa privolu daje roditelj ili skrbnik. Ime i prezime roditelja/skrbnika:<input class="inp" name="parent" value="${esc(v.parent||'')}" placeholder="Roditelj potvrđuje da je pročitao i da je suglasan"></label>
 <div id="qerr" class="s" style="color:var(--bad)"></div>
 <button class="btn acc full" id="qsend">${I('check')} Pošalji i uđi u aplikaciju</button>
 <button type="button" class="btn ghost sm" onclick="${o.demo?'qDemoExit()':'logout()'}">${o.demo?I('back','sm')+' Natrag u demo':I('out','sm')+' Odjava'}</button></form>`);
  bindTiles($('#phs'),PHS);
+ /* čarobnjak: jedan korak po ekranu, s napretkom */
+ {const fm=$('#qf'),steps=[...fm.querySelectorAll(':scope > .card.stack')],tail=[...fm.children].filter(x=>!steps.includes(x)&&steps.length&&x.compareDocumentPosition(steps[steps.length-1])&Node.DOCUMENT_POSITION_PRECEDING),intro=fm.firstElementChild;let at=0;
+  const ph=$('#qph');if(ph)ph.insertAdjacentHTML('beforeend','<p class="xs mute" style="margin:0">Preporučeno, ali nije obavezno. Možeš ih dodati i kasnije u Napredak → Tijelo.</p>');
+  const nav=document.createElement('div');nav.className='qnav';fm.insertBefore(nav,steps[0]);
+  const bar=document.createElement('div');bar.className='qbar';bar.innerHTML='<i></i>';fm.insertBefore(bar,steps[0]);
+  const reqOk=i=>{if(i>=QF.length)return true;const miss=QF[i][1].filter(([k,,t,req])=>req&&t!='age'&&!(f[k]?f[k].value.trim():pick[k]));f.querySelectorAll('.inp,[data-k]').forEach(x=>x.style.outline='');miss.forEach(([k])=>{const el=f.querySelector(`[name="${k}"],[data-k="${k}"]`);if(el)el.style.outline='2px solid var(--bad)'});$('#qerr').textContent=miss.length?'Nedostaje: '+miss.map(x=>x[1].replace(/\?$/,'')).join(', ')+'.':'';if(miss.length){const er=$('#qerr');er.hidden=false;steps[i].appendChild(er)}return!miss.length};
+  const show=i=>{at=i;steps.forEach((s,k)=>s.hidden=k!=i);intro.hidden=i>0;tail.forEach(t=>t.hidden=i<steps.length-1&&!t.matches('.btn.ghost'));if(i==steps.length-1)fm.insertBefore($('#qerr'),$('#qsend'));
+   bar.firstChild.style.width=((i+1)/steps.length*100)+'%';
+   nav.innerHTML=i<steps.length-1?`<div class="grid2">${i?`<button type="button" class="btn ghost" data-b>${I('back','sm')} Natrag</button>`:'<span></span>'}<button type="button" class="btn acc" data-n>Dalje ${I('chev','sm')}</button></div>`:(i?`<button type="button" class="btn ghost full" data-b>${I('back','sm')} Natrag</button>`:'');
+   fm.appendChild(nav);const lo=fm.querySelector(':scope > .btn.ghost.sm');if(lo)fm.appendChild(lo);
+   const nb=nav.querySelector('[data-n]'),bb=nav.querySelector('[data-b]');if(nb)nb.onclick=()=>{if(reqOk(at))show(at+1),scrollTo(0,0)};if(bb)bb.onclick=()=>{show(at-1);scrollTo(0,0)}};
+  show(0)}
  const f=$('#qf'),pick={};QF.flatMap(s=>s[1]).filter(x=>x[2]=='scale'||x[2]=='pick').forEach(x=>{if(v[x[0]]!=null)pick[x[0]]=String(v[x[0]])});
  const collect=()=>{const q={};QF.flatMap(s=>s[1]).forEach(([k,,t])=>{if(t=='scale'||t=='pick')q[k]=pick[k]||'';else if(f[k])q[k]=f[k].value.trim()});q.age=String(ageOf(q.bd)||'');if(f.parent)q.parent=f.parent.value.trim();['h','kg','meals','kcal','sleep','steps'].forEach(k=>{if(q[k])q[k]=q[k].replace(',','.')});q.ok=f.ok.checked?'da':'';return q};
  const keep=()=>{const q=collect();delete q.em;LS.set('kfitk-q',q)};
@@ -53,8 +65,7 @@ ${QF.map(([t,fs,intro],i)=>`<div class="card stack"><div class="between"><h3>${t
   f.querySelectorAll('.inp,[data-k]').forEach(x=>x.style.outline='');QF.flatMap(s=>s[1]).filter(([k,,t,req])=>req&&t!='age'&&!q[k]).forEach(([k])=>{const el=f.querySelector(`[name="${k}"],[data-k="${k}"]`);if(el)el.style.outline='2px solid var(--bad)'});
   if(miss.length){err.textContent='Nedostaje: '+miss.join(', ')+'.';const el=f.querySelector('[style*="var(--bad)"]');if(el)el.scrollIntoView({block:'center',behavior:'smooth'});return}
   if(bad.length){err.textContent='Provjeri: '+bad.join(', ')+' (broj izgleda neobično).';return}
-  const mp=PH.filter(([k])=>!PHS[k]).map(x=>x[1].toLowerCase());if(mp.length){err.textContent='Dodaj fotografije: '+mp.join(', ')+'.';$('#qph').style.outline='2px solid var(--bad)';$('#qph').scrollIntoView({block:'center',behavior:'smooth'});return}
-  if(q.ok!='da'){err.textContent='Za nastavak označi privolu na dnu.';return}
+    if(q.ok!='da'){err.textContent='Za nastavak označi privolu na dnu.';return}
   if(isMinor(q.bd)&&!(q.parent||'').trim()){const p=$('#qpar');p.hidden=false;err.textContent='Mlađi si od 16. Upiši ime roditelja ili skrbnika koji daje privolu.';p.scrollIntoView({block:'center',behavior:'smooth'});return}
   const b=$('#qsend');b.disabled=true;err.textContent='';
   let r;try{r=await API.onboard({...q,txt:qNote(q)+(q.parent?'\nPrivola roditelja/skrbnika: '+q.parent.trim()+' ('+fmt(today())+')':'')})}
