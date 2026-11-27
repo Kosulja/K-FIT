@@ -321,7 +321,7 @@ let BIP=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault(
 function installHelp(){if(BIP){BIP.prompt();BIP=null;return}sheet(`<div class="stack">${sheetHd('Instaliraj app')}<p><b>iPhone (Safari):</b> tipka Dijeli → „Dodaj na početni zaslon”.</p><p><b>Android (Chrome):</b> izbornik ⋮ → „Instaliraj aplikaciju”.</p><a class="btn ghost sm" href="instaliraj.html" target="_blank">Detaljne upute s koracima</a></div>`)}
 
 /* ============ PUSH OBAVIJESTI ============ */
-const APPV='39';
+const APPV='40';
 addEventListener('unhandledrejection',e=>{const m=e.reason&&(e.reason.message||e.reason);if(m&&ROLE=='client')toast('Greška: '+String(m).slice(0,120),5000)});
 const VAPID='BBGgvP78966HFRAiSQKynKAOdc-XHACULcCl9hrSWOCPmCL8Qka-fZ1QYroiuDOXvLRG4qP9-PtulVI2qQl_MiI';
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
@@ -333,8 +333,9 @@ async function pushOn(){if(DEMO){toast('Obavijesti rade samo u pravoj prijavi.')
  /* prozor s koracima: klijent vidi što se događa, a screenshot treneru govori gdje je zapelo */
  const o=sheet(`<div class="stack">${sheetHd('Uključujem obavijesti')}<div class="list" id="pst"></div><div id="pend"></div></div>`),box=o.querySelector('#pst'),end=o.querySelector('#pend');
  const step=(t,ok)=>{box.insertAdjacentHTML('beforeend',`<div class="row" style="gap:10px">${ok===false?I('x','sm'):ok?I('check','sm'):I('clock','sm')}<span class="s">${t}</span></div>`)};
- const fail=(t,help)=>{step(t,false);end.innerHTML=`<p class="s mute" style="margin-top:6px">${help}</p><button class="btn ghost full" style="margin-top:10px" data-x>Zatvori</button>`;return false};
- const ua=navigator.userAgent,android=/Android/.test(ua),howTo=android?'Chrome je pitanje sakrio (tihe obavijesti). Otvori kosulja.github.io/K-FIT/klijent/ u Chromeu, dodirni ikonu lijevo od adrese → Dozvole → Obavijesti → Dopusti. Ili: Chrome → ⋮ → Postavke → Obavijesti → isključi „Tiše poruke”. Zatim se vrati ovdje i uključi ponovno.':'Na iPhoneu: Postavke → Obavijesti → K-FIT → Dopusti obavijesti. Zatim ponovno uključi ovdje.';
+ const diag=()=>{const ua=navigator.userAgent,br=/SamsungBrowser/.test(ua)?'Samsung Internet':/EdgA|Edg\//.test(ua)?'Edge':/Firefox/.test(ua)?'Firefox':/CriOS|Chrome/.test(ua)?'Chrome':/Safari/.test(ua)?'Safari':'?';return `v${APPV} · ${br} · ${standalone()?'aplikacija':'preglednik'} · dozvola: ${'Notification' in window?Notification.permission:'nema'} · SW: ${navigator.serviceWorker&&navigator.serviceWorker.controller?'da':'ne'}`};
+ const fail=(t,help)=>{step(t,false);end.innerHTML=`<p class="s mute" style="margin-top:6px">${help}</p><p class="xs mute" style="margin-top:8px;opacity:.7">${diag()}</p><button class="btn ghost full" style="margin-top:10px" data-x>Zatvori</button>`;return false};
+ const ua=navigator.userAgent,android=/Android/.test(ua),howTo=/SamsungBrowser/.test(ua)?'Aplikacija je instalirana preko Samsung Internet preglednika. Otvori Samsung Internet → ☰ → Postavke → Web-lokacije i preuzimanja → Obavijesti → kosulja.github.io → Dopusti. Zatim ponovno uključi ovdje.':android?'Chrome je pitanje sakrio (tihe obavijesti). Otvori kosulja.github.io/K-FIT/klijent/ u Chromeu, dodirni ikonu lijevo od adrese → Dozvole → Obavijesti → Dopusti. Ili: Chrome → ⋮ → Postavke → Obavijesti → isključi „Tiše poruke”. Zatim se vrati ovdje i uključi ponovno.':'Na iPhoneu: Postavke → Obavijesti → K-FIT → Dopusti obavijesti. Zatim ponovno uključi ovdje.';
  if(!pushOk())return fail('Ovaj preglednik ne podržava obavijesti.',android?'Otvori aplikaciju u Chromeu ili je instaliraj na početni zaslon.':'Otvori K-FIT s ikone na početnom zaslonu.');
  step('Tražim dozvolu za obavijesti…');
  let p=Notification.permission;
