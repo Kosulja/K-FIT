@@ -268,7 +268,7 @@ let WT;function water(d){const t=today(),ml=Math.max(0,(dayVal('water',t,'ml')||
  if(navigator.vibrate)navigator.vibrate(8);clearTimeout(WT);WT=setTimeout(()=>put(r),700)}
 
 /* — modal — */
-function sheet(html,onMount){const o=document.createElement('div');o.className='ov';o.innerHTML=`<div class="sheet" role="dialog">${html}</div>`;o.onclick=e=>{if(e.target==o)close(o)};document.body.append(o);
+function sheet(html,onMount){const o=document.createElement('div');o.className='ov';o.innerHTML=`<div class="sheet" role="dialog">${html}</div>`;o.onclick=e=>{if(e.target==o)return close(o);const x=e.target.closest&&e.target.closest('[data-x]');if(x&&!x.onclick)close(o)};document.body.append(o);
  o.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>close(o));onMount&&onMount(o);return o}
 function close(o){if(o._onclose)o._onclose();o.remove()}
 /* potvrda unutar appa (umjesto preglednikovog confirm) */
@@ -326,12 +326,26 @@ const b64u=s=>{const p='='.repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,'+
 function pushState(){if(!pushOk())return/iPhone|iPad/.test(navigator.userAgent)&&!standalone()?'install':'no';return Notification.permission=='granted'&&LS.get('kfitk-push',0)?'on':Notification.permission=='denied'?'denied':'off'}
 async function pushOn(){if(DEMO){toast('Obavijesti rade samo u pravoj prijavi.');return false}
  const st=pushState();if(st=='install'){sheet(`<div class="stack">${sheetHd('Prvo instaliraj aplikaciju')}<p class="s mute">Na iPhoneu obavijesti rade samo kad je K-FIT dodan na početni zaslon. U Safariju dodirni Dijeli → Dodaj na početni zaslon, otvori K-FIT s ikone i uključi obavijesti.</p><button class="btn ghost full" data-x>U redu</button></div>`);return false}
- if(st=='no'){toast('Ovaj preglednik ne podržava obavijesti.');return false}
- try{const p=Notification.permission=='granted'?'granted':await new Promise(r=>{try{const x=Notification.requestPermission(r);if(x&&x.then)x.then(r)}catch(e){r('denied')}});if(p!='granted'){toast('Obavijesti nisu dopuštene. Možeš ih uključiti u postavkama mobitela.');return false}
-  const reg=await navigator.serviceWorker.ready;let s=await reg.pushManager.getSubscription();if(!s)s=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID)});
-  const{error}=await SB.rpc('kfit_push_save',{s:s.toJSON()});if(error)throw error;LS.set('kfitk-push',1);toast('Obavijesti su uključene.');return true}
- catch(e){console.error(e);toast('Uključivanje nije uspjelo: '+(e.message||e));return false}}
+ /* prozor s koracima: klijent vidi što se događa, a screenshot treneru govori gdje je zapelo */
+ const o=sheet(`<div class="stack">${sheetHd('Uključujem obavijesti')}<div class="list" id="pst"></div><div id="pend"></div></div>`),box=o.querySelector('#pst'),end=o.querySelector('#pend');
+ const step=(t,ok)=>{box.insertAdjacentHTML('beforeend',`<div class="row" style="gap:10px">${ok===false?I('x','sm'):ok?I('check','sm'):I('clock','sm')}<span class="s">${t}</span></div>`)};
+ const fail=(t,help)=>{step(t,false);end.innerHTML=`<p class="s mute" style="margin-top:6px">${help}</p><button class="btn ghost full" style="margin-top:10px" data-x>Zatvori</button>`;return false};
+ const ua=navigator.userAgent,android=/Android/.test(ua),howTo=android?'Na Androidu: Postavke → Aplikacije → K-FIT (ili Chrome) → Obavijesti → Dopusti. Zatim ponovno uključi ovdje.':'Na iPhoneu: Postavke → Obavijesti → K-FIT → Dopusti obavijesti. Zatim ponovno uključi ovdje.';
+ if(!pushOk())return fail('Ovaj preglednik ne podržava obavijesti.',android?'Otvori aplikaciju u Chromeu ili je instaliraj na početni zaslon.':'Otvori K-FIT s ikone na početnom zaslonu.');
+ step('Tražim dozvolu za obavijesti…');
+ let p=Notification.permission;
+ if(p!='granted'){try{p=await Promise.race([new Promise(r=>{try{const x=Notification.requestPermission(r);if(x&&x.then)x.then(r)}catch(e){r('denied')}}),new Promise(r=>setTimeout(()=>r('timeout'),20000))])}catch(e){p='denied'}}
+ if(p=='timeout')return fail('Mobitel nije prikazao pitanje za dozvolu.',howTo);
+ if(p!='granted')return fail(p=='denied'?'Obavijesti su blokirane na ovom mobitelu.':'Dozvola nije dana.',howTo);
+ step('Dozvola dana.',true);
+ try{let reg=await navigator.serviceWorker.getRegistration();if(!reg)reg=await navigator.serviceWorker.register('sw.js');
+  reg=await Promise.race([navigator.serviceWorker.ready,new Promise((_,rj)=>setTimeout(()=>rj(new Error('servis aplikacije se nije pokrenuo')),15000))]);
+  let s=await reg.pushManager.getSubscription();if(!s)s=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID)});
+  step('Mobitel je prijavljen za obavijesti.',true);
+  const{error}=await SB.rpc('kfit_push_save',{s:s.toJSON()});if(error)throw error;LS.set('kfitk-push',1);step('Spremljeno. Obavijesti su uključene.',true);
+  end.innerHTML=`<button class="btn acc full" style="margin-top:6px" onclick="pushTest()">${I('bell','sm')} Pošalji probnu obavijest</button><button class="btn ghost full" style="margin-top:8px" data-x>Gotovo</button>`;keepScroll(render);return true}
+ catch(e){console.error(e);return fail('Uključivanje nije uspjelo: '+esc(e.message||String(e)),'Zatvori aplikaciju, otvori je ponovno i pokušaj još jednom. Ako ne uspije, pošalji treneru screenshot ovog prozora.')}}
 async function pushOff(){try{const reg=await navigator.serviceWorker.ready,s=await reg.pushManager.getSubscription();if(s){await SB.rpc('kfit_push_del',{ep:s.endpoint});await s.unsubscribe()}}catch(e){}LS.del('kfitk-push');toast('Obavijesti su isključene.')}
 async function pushTest(){try{const{data:{session}}=await SB.auth.getSession();const r=await fetch(CFG.url+'/functions/v1/kfit-push',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token,apikey:CFG.key},body:'{"test":true}'});const j=await r.json();toast(j.sent?'Probna obavijest poslana.':'Nema uređaja s uključenim obavijestima.')}catch(e){toast('Slanje nije uspjelo.')}}
 function pushRow(){const st=pushState(),on=st=='on';
- return `<div class="between"><div class="row" style="min-width:0">${I('bell')}<div style="min-width:0"><div class="b s">Obavijesti</div><div class="xs mute">${st=='denied'?'blokirane u postavkama mobitela':st=='install'?'dodaj aplikaciju na početni zaslon':'trening, kraj odmora, podsjetnik u 18 h, plan nedjeljom'}</div></div></div>${on?`<div class="row" style="gap:6px"><button class="btn sm ghost" onclick="pushTest()">Proba</button><button class="tgl on" role="switch" aria-checked="true" onclick="pushOff().then(()=>keepScroll(render))"></button></div>`:`<button class="tgl" role="switch" aria-checked="false" onclick="pushOn().then(()=>keepScroll(render))"></button>`}</div>`}
+ return `<div class="between"><div class="row" style="min-width:0">${I('bell')}<div style="min-width:0"><div class="b s">Obavijesti</div><div class="xs mute">${st=='denied'?'blokirane u postavkama mobitela':st=='install'?'dodaj aplikaciju na početni zaslon':'trening, kraj odmora, podsjetnik u 18 h, plan nedjeljom'}</div></div></div>${on?`<div class="row" style="gap:6px"><button class="btn sm ghost" onclick="pushTest()">Proba</button><button class="tgl on" role="switch" aria-checked="true" onclick="pushOff().then(()=>keepScroll(render))"></button></div>`:`<button class="tgl" role="switch" aria-checked="false" onclick="pushOn()"></button>`}</div>`}
