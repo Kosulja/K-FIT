@@ -102,7 +102,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&getDr()&&
 /* — zvuk/vibracija — */
 let AC=null;const unlockAudio=()=>{try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state=='suspended')AC.resume()}catch(e){}};
 function beep(){try{if(!AC)return;[0,.22,.44].forEach((t,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=i==2?1180:880;g.gain.setValueAtTime(.0001,AC.currentTime+t);g.gain.exponentialRampToValueAtTime(.25,AC.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+t+.18);o.connect(g).connect(AC.destination);o.start(AC.currentTime+t);o.stop(AC.currentTime+t+.2)})}catch(e){}}
-async function notify(title,body){try{if(!setts().notif||!('Notification' in window)||Notification.permission!='granted')return;const r=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(r)r.showNotification(title,{body,icon:'../icons/icon-192.png',tag:'kfit-rest',renotify:true,vibrate:[200,100,200]});else new Notification(title,{body})}catch(e){}}
+async function notify(title,body){try{if(!('Notification' in window)||Notification.permission!='granted'||!document.hidden)return;const r=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(r)r.showNotification(title,{body,icon:'../icons/icon-192.png',tag:'kfit-rest',renotify:true,vibrate:[200,100,200]});else new Notification(title,{body})}catch(e){}}
 
 /* — timer odmora — */
 let RT=null,RTI=null;
