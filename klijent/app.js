@@ -12,6 +12,7 @@ const ds=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+Strin
 const pd=s=>{const[a,b,c]=s.split('-');return new Date(a,b-1,c)};
 const today=()=>ds(new Date()),addD=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ds(d)};
 const daysTo=s=>Math.round((pd(s)-pd(today()))/864e5);
+const MJK=['sij','velj','ožu','tra','svi','lip','srp','kol','ruj','lis','stu','pro'];const dTile=d=>`<div class="av dt"><b>${+d.slice(8,10)}</b><i>${MJK[+d.slice(5,7)-1]}</i></div>`;
 const fmt=s=>s?s.split('-').reverse().join('.'):'—';
 const WD=['Pon','Uto','Sri','Čet','Pet','Sub','Ned'],wdi=s=>(pd(s).getDay()+6)%7;
 const MJ=['sij','velj','ožu','tra','svi','lip','srp','kol','ruj','lis','stu','pro'];
@@ -324,7 +325,7 @@ let BIP=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault(
 function installHelp(){if(BIP){BIP.prompt();BIP=null;return}sheet(`<div class="stack">${sheetHd('Instaliraj app')}<p><b>iPhone (Safari):</b> tipka Dijeli → „Dodaj na početni zaslon”.</p><p><b>Android (Chrome):</b> izbornik ⋮ → „Instaliraj aplikaciju”.</p><a class="btn ghost sm" href="instaliraj.html" target="_blank">Detaljne upute s koracima</a></div>`)}
 
 /* ============ PUSH OBAVIJESTI ============ */
-const APPV='42';
+const APPV='43';
 addEventListener('unhandledrejection',e=>{const m=e.reason&&(e.reason.message||e.reason);if(m&&ROLE=='client')toast('Greška: '+String(m).slice(0,120),5000)});
 const VAPID='BBGgvP78966HFRAiSQKynKAOdc-XHACULcCl9hrSWOCPmCL8Qka-fZ1QYroiuDOXvLRG4qP9-PtulVI2qQl_MiI';
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
