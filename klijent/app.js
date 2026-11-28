@@ -325,7 +325,7 @@ let BIP=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault(
 function installHelp(){if(BIP){BIP.prompt();BIP=null;return}sheet(`<div class="stack">${sheetHd('Instaliraj app')}<p><b>iPhone (Safari):</b> tipka Dijeli → „Dodaj na početni zaslon”.</p><p><b>Android (Chrome):</b> izbornik ⋮ → „Instaliraj aplikaciju”.</p><a class="btn ghost sm" href="instaliraj.html" target="_blank">Detaljne upute s koracima</a></div>`)}
 
 /* ============ PUSH OBAVIJESTI ============ */
-const APPV='43';
+const APPV='44';
 addEventListener('unhandledrejection',e=>{const m=e.reason&&(e.reason.message||e.reason);if(m&&ROLE=='client')toast('Greška: '+String(m).slice(0,120),5000)});
 const VAPID='BBGgvP78966HFRAiSQKynKAOdc-XHACULcCl9hrSWOCPmCL8Qka-fZ1QYroiuDOXvLRG4qP9-PtulVI2qQl_MiI';
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
